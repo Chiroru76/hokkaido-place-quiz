@@ -1,9 +1,32 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# db/seeds.rb
+require "csv"
+
+puts "Importing Hokkaido municipalities..."
+
+csv_path = Rails.root.join("db/data/shichoson.csv")
+
+Place.destroy_all
+
+CSV.foreach(csv_path, headers: true, encoding: "CP932") do |row|
+  name = row["市町村名"]
+  reading = row["かな"]
+
+  difficulty =
+    if name.end_with?("市")
+      1
+    elsif name.end_with?("町")
+      2
+    elsif name.end_with?("村")
+      3
+    else
+      2
+    end
+
+  Place.create!(
+    name: name,
+    reading: reading,
+    difficulty: difficulty
+  )
+end
+
+puts "Seed completed: #{Place.count} places imported!"
