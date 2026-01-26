@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { QuizState } from "./types/quiz";
-import { initialQuizState } from "./state/quizState";
+import { initialQuizState } from "./state/initialState";
 
 const state = ref<QuizState>({ ...initialQuizState });
 </script>
