@@ -8,9 +8,13 @@ import {
   nextQuestion,
 } from "./state/transitions";
 import { startSession, fetchNextQuestion, submitAnswer } from "./api/quizApi";
+import { useAchievedMunicipalities } from "./composables/useAchievedMunicipalities";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
+
+// 正解済み市町村管理
+const { markAsAchieved } = useAchievedMunicipalities();
 
 // Google Maps APIキーを環境変数から取得
 const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -112,6 +116,11 @@ async function onAnswer() {
 
   // APIレスポンスをpayloadに変換してstateを更新
   state.value = answerQuestion(state.value, toAnswerPayload(response));
+
+  // 正解の場合、市町村を正解済みとして記録
+  if (response.correct) {
+    markAsAchieved(state.value.placeName);
+  }
 
   answerInput.value = "";
 }
