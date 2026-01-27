@@ -106,6 +106,8 @@ async function onAnswer() {
 
   // APIレスポンスをpayloadに変換してstateを更新
   state.value = answerQuestion(state.value, toAnswerPayload(response));
+
+  answerInput.value = "";
 }
 
 /**
@@ -131,6 +133,8 @@ function onNext() {
     <!-- question -->
     <div v-else-if="state.phase === 'question'">
       <p>{{ state.placeName }}</p>
+      <p>{{ state.currentIndex + 1 }} / {{ state.total }} 問目</p>
+      <p>正解数：{{ state.correctCount }}</p>
 
       <input type="text" v-model="answerInput", placeholder="ひらがなで入力" />
       <button @click="onAnswer">回答する</button>
