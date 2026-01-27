@@ -2,8 +2,12 @@
 import { ref } from "vue";
 import type { QuizState } from "./types/quiz";
 import { initialQuizState } from "./state/initialState";
-import { startQuestion, answerQuestion, nextQuestion } from "./state/transitions";
-import { startSession, fetchNextQuestion,submitAnswer } from "./api/quizApi";
+import {
+  startQuestion,
+  answerQuestion,
+  nextQuestion,
+} from "./state/transitions";
+import { startSession, fetchNextQuestion, submitAnswer } from "./api/quizApi";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
@@ -34,7 +38,7 @@ type AnswerResponse = {
 function toStartPayload(
   session: SessionResponse,
   next: NextQuestionResponse,
-  correctCount: number
+  correctCount: number,
 ) {
   return {
     sessionId: session.session_id,
@@ -42,7 +46,7 @@ function toStartPayload(
     currentIndex: (next.current ?? 1) - 1,
     questionId: next.question_id ?? 0,
     placeName: next.name ?? "",
-    correctCount
+    correctCount,
   };
 }
 
@@ -50,7 +54,7 @@ function toStartPayload(
 function toNextPayload(next: NextQuestionResponse) {
   return {
     questionId: next.question_id ?? 0,
-    placeName: next.name ?? ""
+    placeName: next.name ?? "",
   };
 }
 
@@ -59,7 +63,7 @@ function toAnswerPayload(res: AnswerResponse) {
   return {
     correct: res.correct,
     correctReading: res.correct_reading,
-    correctCount: res.correct_count
+    correctCount: res.correct_count,
   };
 }
 
@@ -71,15 +75,14 @@ async function onStart() {
   const session: SessionResponse = await startSession(10);
 
   // 最初の問題取得
-  const next: NextQuestionResponse = await fetchNextQuestion(session.session_id);
+  const next: NextQuestionResponse = await fetchNextQuestion(
+    session.session_id,
+  );
 
   // loadに変換してstateを更新
   // 第１引数: 既存のstate
   // 第２引数: APIレスポンスを変換したpayload（次のフェースに必要なデータ一式）
-  state.value = startQuestion(
-    state.value,
-    toStartPayload(session, next, 0)
-  );
+  state.value = startQuestion(state.value, toStartPayload(session, next, 0));
 }
 
 /**
@@ -101,7 +104,7 @@ async function onAnswer() {
   const response: AnswerResponse = await submitAnswer(
     sessionId,
     questionId,
-    answer
+    answer,
   );
 
   // APIレスポンスをpayloadに変換してstateを更新
@@ -123,20 +126,19 @@ async function onNext() {
     return;
   }
 
+  // 次の問題取得
   const next: NextQuestionResponse = await fetchNextQuestion(sessionId);
 
   if (next.completed) {
     state.value = {
       phase: "completed",
-      sessionId,
-      total: next.total ?? state.value.total,
-      currentIndex: next.current ?? state.value.currentIndex,
-      correctCount: state.value.correctCount
+      sessionId: state.value.sessionId,
+      total: state.value.total,
+      correctCount: state.value.correctCount,
     };
-    return;
+  } else {
+    state.value = nextQuestion(state.value, toNextPayload(next));
   }
-
-  state.value = nextQuestion(state.value, toNextPayload(next));
 }
 </script>
 
@@ -155,16 +157,14 @@ async function onNext() {
       <p>{{ state.currentIndex + 1 }} / {{ state.total }} 問目</p>
       <p>正解数：{{ state.correctCount }}</p>
 
-      <input type="text" v-model="answerInput", placeholder="ひらがなで入力" />
+      <input type="text" v-model="answerInput" , placeholder="ひらがなで入力" />
       <button @click="onAnswer">回答する</button>
     </div>
 
     <!-- answered -->
     <div v-else-if="state.phase === 'answered'">
       <p v-if="state.correct">正解！</p>
-      <p v-else>
-        不正解（{{ state.correctReading }}）
-      </p>
+      <p v-else>不正解（{{ state.correctReading }}）</p>
       <button @click="onNext">次へ</button>
     </div>
 
@@ -180,5 +180,5 @@ async function onNext() {
   max-width: 720px;
   margin: 40px auto;
   padding: 0 16px;
-  }
+}
 </style>
