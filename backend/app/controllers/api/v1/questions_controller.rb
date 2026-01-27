@@ -42,7 +42,11 @@ module Api
         session[:current_index] += 1
         Rails.cache.write(cache_key(session_id), session)
 
-        render json: correct ? { correct: true } : { correct: false, correct_reading: place.reading }
+        render json: {
+          correct: correct,
+          correct_reading: (correct ? nil : place.reading),
+          correct_count: session[:correct_count]
+        }
       end
 
       private
