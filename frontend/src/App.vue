@@ -151,69 +151,128 @@ function onRetry() {
 </script>
 
 <template>
-  <div>
+  <div class="app-container">
     <h1>北海道地名読みクイズ</h1>
 
     <!-- idle -->
     <div v-if="state.phase === 'idle'">
-      <n-button type="primary" size="large" @click="onStart">スタート</n-button>
+        <n-space vertical size="large">
+          <p>北海道の地名の読み方を当てるクイズです。</p>
+
+          <n-card title="ルール" size="small">
+            <n-space vertical>
+              <p> 全10問出題されます</p>
+              <p> 地名の読みを「ひらがな」で入力してください</p>
+              <p> 179市町村全て読めるようになりましょう</p>
+            </n-space>
+          </n-card>
+
+          <n-button type="primary" size="large" block @click="onStart">
+            スタート
+          </n-button>
+        </n-space>
     </div>
 
     <!-- question -->
     <div v-else-if="state.phase === 'question'">
+      <n-space vertical size="large">
+        <n-card size="small">
+          <n-space vertical size="small">
+            <n-space justify="space-between">
+              <span>問題 {{ state.currentIndex + 1 }} / {{ state.total }}</span>
+              <span>正解数：{{ state.correctCount }}</span>
+            </n-space>
+            <n-progress
+              :percentage="((state.currentIndex + 1) / state.total) * 100"
+              :show-indicator="false"
+            />
+          </n-space>
+        </n-card>
 
-        <p>{{ state.currentIndex + 1 }} / {{ state.total }} 問目</p>
-        <n-progress :percentage="(state.currentIndex + 1) / state.total * 100" />
+        <n-card title="次の地名の読み方は？">
+          <h2>{{ state.placeName }}</h2>
+        </n-card>
 
-
-      <n-card title="次の地名の読み方は？" style="margin-bottom: 16px;">
-        <h2>{{ state.placeName }}</h2>
-      </n-card>
-
-      <p>正解数：{{ state.correctCount }}</p>
-
-      <n-input v-model:value="answerInput" size="small" style="width: 200px;" placeholder="ひらがなで入力" />
-      <n-button type="primary" @click="onAnswer">回答する</n-button>
+        <n-space justify="center">
+          <n-input
+            v-model:value="answerInput"
+            placeholder="ひらがなで入力"
+            style="width: 300px;"
+          />
+          <n-button type="primary" size="large" @click="onAnswer">
+            回答する
+          </n-button>
+        </n-space>
+      </n-space>
     </div>
 
     <!-- answered -->
     <div v-else-if="state.phase === 'answered'">
-      <n-alert v-if="state.correct" type="success" title="正解！" style="margin-bottom: 16px;" />
-      <n-alert v-else type="error" :title="`不正解（正解: ${state.correctReading}）`" style="margin-bottom: 16px;" />
-      <n-button type="primary" @click="onNext">次へ</n-button>
+      <n-space vertical size="large">
+        <n-alert
+          v-if="state.correct"
+          type="success"
+          title="正解！"
+        />
+        <n-alert
+          v-else
+          type="error"
+          :title="`不正解（正解: ${state.correctReading}）`"
+        />
+        <n-button type="primary" size="large" block @click="onNext">
+          次へ
+        </n-button>
+      </n-space>
     </div>
 
     <!-- completed -->
     <div v-else-if="state.phase === 'completed'">
-      <n-result
-        v-if="state.correctCount / state.total >= 0.8"
-        status="success"
-        title="素晴らしい！"
-        :description="`${state.correctCount} / ${state.total} 問正解！道民レベルです！`"
-      />
-      <n-result
-        v-else-if="state.correctCount / state.total >= 0.5"
-        status="info"
-        title="なかなか良い成績です！"
-        :description="`${state.correctCount} / ${state.total} 問正解！`"
-      />
-      <n-result
-        v-else
-        status="warning"
-        title="もう少し頑張りましょう！"
-        :description="`${state.correctCount} / ${state.total} 問正解`"
-      />
-      <n-button type="primary" size="large" @click="onRetry" style="margin-top: 16px;">
-        もう一度挑戦
-      </n-button>
+      <n-space vertical size="large" align="center">
+        <n-result
+          v-if="state.correctCount / state.total >= 0.8"
+          status="success"
+          title="素晴らしい！"
+          :description="`${state.correctCount} / ${state.total} 問正解！道民レベルです！`"
+        />
+        <n-result
+          v-else-if="state.correctCount / state.total >= 0.5"
+          status="info"
+          title="なかなか良い成績です！"
+          :description="`${state.correctCount} / ${state.total} 問正解！`"
+        />
+        <n-result
+          v-else
+          status="warning"
+          title="もう少し頑張りましょう！"
+          :description="`${state.correctCount} / ${state.total} 問正解`"
+        />
+        <n-button type="primary" size="large" @click="onRetry">
+          もう一度挑戦
+        </n-button>
+      </n-space>
     </div>  
   </div>
 </template>
 
 <style scoped>
-.app {
+.app-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #e3f2fd 0%, #f0f8ff 100%);
+  padding: 40px 16px;
+  color: #000000;
+}
+
+.app-container > * {
   max-width: 720px;
-  margin: 40px auto;
-  padding: 0 16px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.app-container h1 {
+  color: #000000;
+}
+
+.app-container p {
+  color: #000000;
 }
 </style>
