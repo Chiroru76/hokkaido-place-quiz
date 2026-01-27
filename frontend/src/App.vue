@@ -113,11 +113,30 @@ async function onAnswer() {
 /**
  * 次の問題へ
  */
-function onNext() {
-  state.value = nextQuestion(state.value, {
-    questionId: 2,
-    placeName: "札幌",
-  });
+async function onNext() {
+  if (state.value.phase !== "answered") {
+    return;
+  }
+
+  const sessionId = state.value.sessionId;
+  if (!sessionId) {
+    return;
+  }
+
+  const next: NextQuestionResponse = await fetchNextQuestion(sessionId);
+
+  if (next.completed) {
+    state.value = {
+      phase: "completed",
+      sessionId,
+      total: next.total ?? state.value.total,
+      currentIndex: next.current ?? state.value.currentIndex,
+      correctCount: state.value.correctCount
+    };
+    return;
+  }
+
+  state.value = nextQuestion(state.value, toNextPayload(next));
 }
 </script>
 
