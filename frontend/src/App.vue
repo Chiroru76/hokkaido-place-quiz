@@ -9,12 +9,13 @@ import {
 } from "./state/transitions";
 import { startSession, fetchNextQuestion, submitAnswer } from "./api/quizApi";
 import { useAchievedMunicipalities } from "./composables/useAchievedMunicipalities";
+import HokkaidoMap from "./components/HokkaidoMap.vue";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
 
 // 正解済み市町村管理
-const { markAsAchieved } = useAchievedMunicipalities();
+const { markAsAchieved, achievedCount, achievementRate } = useAchievedMunicipalities();
 
 // Google Maps APIキーを環境変数から取得
 const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -271,6 +272,20 @@ function onRetry() {
           title="もう少し頑張りましょう！"
           :description="`${state.correctCount} / ${state.total} 問正解`"
         />
+
+        <n-card title="達成状況マップ" size="small" style="width: 100%;">
+          <n-space vertical size="small">
+            <n-space justify="space-between">
+              <span>正解済み市町村数: {{ achievedCount }} / 179</span>
+              <span>達成率: {{ achievementRate }}%</span>
+            </n-space>
+            <HokkaidoMap />
+            <p style="font-size: 12px; color: #666; text-align: center;">
+              緑色が正解済みの市町村です
+            </p>
+          </n-space>
+        </n-card>
+
         <n-button type="primary" size="large" @click="onRetry">
           もう一度挑戦
         </n-button>
