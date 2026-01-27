@@ -2,8 +2,12 @@
 import { ref } from "vue";
 import type { QuizState } from "./types/quiz";
 import { initialQuizState } from "./state/initialState";
-import { startQuestion, answerQuestion, nextQuestion } from "./state/transitions";
-import { startSession, fetchNextQuestion,submitAnswer } from "./api/quizApi";
+import {
+  startQuestion,
+  answerQuestion,
+  nextQuestion,
+} from "./state/transitions";
+import { startSession, fetchNextQuestion, submitAnswer } from "./api/quizApi";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
@@ -34,7 +38,7 @@ type AnswerResponse = {
 function toStartPayload(
   session: SessionResponse,
   next: NextQuestionResponse,
-  correctCount: number
+  correctCount: number,
 ) {
   return {
     sessionId: session.session_id,
@@ -42,7 +46,7 @@ function toStartPayload(
     currentIndex: (next.current ?? 1) - 1,
     questionId: next.question_id ?? 0,
     placeName: next.name ?? "",
-    correctCount
+    correctCount,
   };
 }
 
@@ -50,7 +54,7 @@ function toStartPayload(
 function toNextPayload(next: NextQuestionResponse) {
   return {
     questionId: next.question_id ?? 0,
-    placeName: next.name ?? ""
+    placeName: next.name ?? "",
   };
 }
 
@@ -59,7 +63,7 @@ function toAnswerPayload(res: AnswerResponse) {
   return {
     correct: res.correct,
     correctReading: res.correct_reading,
-    correctCount: res.correct_count
+    correctCount: res.correct_count,
   };
 }
 
@@ -71,15 +75,14 @@ async function onStart() {
   const session: SessionResponse = await startSession(10);
 
   // 最初の問題取得
-  const next: NextQuestionResponse = await fetchNextQuestion(session.session_id);
+  const next: NextQuestionResponse = await fetchNextQuestion(
+    session.session_id,
+  );
 
   // loadに変換してstateを更新
   // 第１引数: 既存のstate
   // 第２引数: APIレスポンスを変換したpayload（次のフェースに必要なデータ一式）
-  state.value = startQuestion(
-    state.value,
-    toStartPayload(session, next, 0)
-  );
+  state.value = startQuestion(state.value, toStartPayload(session, next, 0));
 }
 
 /**
@@ -101,7 +104,7 @@ async function onAnswer() {
   const response: AnswerResponse = await submitAnswer(
     sessionId,
     questionId,
-    answer
+    answer,
   );
 
   // APIレスポンスをpayloadに変換してstateを更新
@@ -123,62 +126,153 @@ async function onNext() {
     return;
   }
 
+  // 次の問題取得
   const next: NextQuestionResponse = await fetchNextQuestion(sessionId);
 
   if (next.completed) {
     state.value = {
       phase: "completed",
-      sessionId,
-      total: next.total ?? state.value.total,
-      currentIndex: next.current ?? state.value.currentIndex,
-      correctCount: state.value.correctCount
+      sessionId: state.value.sessionId,
+      total: state.value.total,
+      correctCount: state.value.correctCount,
     };
-    return;
+  } else {
+    state.value = nextQuestion(state.value, toNextPayload(next));
   }
+}
 
-  state.value = nextQuestion(state.value, toNextPayload(next));
+/**
+ * もう一度挑戦
+ */
+function onRetry() {
+  state.value = { ...initialQuizState };
+  answerInput.value = "";
 }
 </script>
 
 <template>
-  <div>
+  <div class="app-container">
     <h1>北海道地名読みクイズ</h1>
 
     <!-- idle -->
     <div v-if="state.phase === 'idle'">
-      <button @click="onStart">スタート</button>
+        <n-space vertical size="large">
+          <p>北海道の地名の読み方を当てるクイズです。</p>
+
+          <n-card title="ルール" size="small">
+            <n-space vertical>
+              <p> 全10問出題されます</p>
+              <p> 地名の読みを「ひらがな」で入力してください</p>
+              <p> 179市町村全て読めるようになりましょう</p>
+            </n-space>
+          </n-card>
+
+          <n-button type="primary" size="large" block @click="onStart">
+            スタート
+          </n-button>
+        </n-space>
     </div>
 
     <!-- question -->
     <div v-else-if="state.phase === 'question'">
-      <p>{{ state.placeName }}</p>
-      <p>{{ state.currentIndex + 1 }} / {{ state.total }} 問目</p>
-      <p>正解数：{{ state.correctCount }}</p>
+      <n-space vertical size="large">
+        <n-card size="small">
+          <n-space vertical size="small">
+            <n-space justify="space-between">
+              <span>問題 {{ state.currentIndex + 1 }} / {{ state.total }}</span>
+              <span>正解数：{{ state.correctCount }}</span>
+            </n-space>
+            <n-progress
+              :percentage="((state.currentIndex + 1) / state.total) * 100"
+              :show-indicator="false"
+            />
+          </n-space>
+        </n-card>
 
-      <input type="text" v-model="answerInput", placeholder="ひらがなで入力" />
-      <button @click="onAnswer">回答する</button>
+        <n-card title="次の地名の読み方は？">
+          <h2>{{ state.placeName }}</h2>
+        </n-card>
+
+        <n-space justify="center">
+          <n-input
+            v-model:value="answerInput"
+            placeholder="ひらがなで入力"
+            style="width: 300px;"
+          />
+          <n-button type="primary" size="large" @click="onAnswer">
+            回答する
+          </n-button>
+        </n-space>
+      </n-space>
     </div>
 
     <!-- answered -->
     <div v-else-if="state.phase === 'answered'">
-      <p v-if="state.correct">正解！</p>
-      <p v-else>
-        不正解（{{ state.correctReading }}）
-      </p>
-      <button @click="onNext">次へ</button>
+      <n-space vertical size="large">
+        <n-alert
+          v-if="state.correct"
+          type="success"
+          title="正解！"
+        />
+        <n-alert
+          v-else
+          type="error"
+          :title="`不正解（正解: ${state.correctReading}）`"
+        />
+        <n-button type="primary" size="large" block @click="onNext">
+          次へ
+        </n-button>
+      </n-space>
     </div>
 
     <!-- completed -->
     <div v-else-if="state.phase === 'completed'">
-      <p>結果: {{ state.correctCount }} / {{ state.total }}</p>
-    </div>
+      <n-space vertical size="large" align="center">
+        <n-result
+          v-if="state.correctCount / state.total >= 0.8"
+          status="success"
+          title="素晴らしい！"
+          :description="`${state.correctCount} / ${state.total} 問正解！道民レベルです！`"
+        />
+        <n-result
+          v-else-if="state.correctCount / state.total >= 0.5"
+          status="info"
+          title="なかなか良い成績です！"
+          :description="`${state.correctCount} / ${state.total} 問正解！`"
+        />
+        <n-result
+          v-else
+          status="warning"
+          title="もう少し頑張りましょう！"
+          :description="`${state.correctCount} / ${state.total} 問正解`"
+        />
+        <n-button type="primary" size="large" @click="onRetry">
+          もう一度挑戦
+        </n-button>
+      </n-space>
+    </div>  
   </div>
 </template>
 
 <style scoped>
-.app {
+.app-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #e3f2fd 0%, #f0f8ff 100%);
+  padding: 40px 16px;
+  color: #000000;
+}
+
+.app-container > * {
   max-width: 720px;
-  margin: 40px auto;
-  padding: 0 16px;
-  }
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.app-container h1 {
+  color: #000000;
+}
+
+.app-container p {
+  color: #000000;
+}
 </style>
