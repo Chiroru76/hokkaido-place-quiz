@@ -6,6 +6,7 @@ import { startQuestion, answerQuestion, nextQuestion } from "./state/transitions
 import { startSession, fetchNextQuestion,submitAnswer } from "./api/quizApi";
 
 const state = ref<QuizState>({ ...initialQuizState });
+const answerInput = ref("");
 
 // APIのレスポンス型（snake_case）を定義する
 type SessionResponse = {
@@ -26,6 +27,7 @@ type NextQuestionResponse = {
 type AnswerResponse = {
   correct: boolean;
   correct_reading?: string;
+  correct_count: number;
 };
 
 // APIレスポンスを画面用payload（camelCase）に変換する
@@ -56,7 +58,8 @@ function toNextPayload(next: NextQuestionResponse) {
 function toAnswerPayload(res: AnswerResponse) {
   return {
     correct: res.correct,
-    correctReading: res.correct_reading
+    correctReading: res.correct_reading,
+    correctCount: res.correct_count
   };
 }
 
@@ -82,11 +85,27 @@ async function onStart() {
 /**
  * 回答ボタン
  */
-function onAnswer() {
-  state.value = answerQuestion(state.value, {
-    correct: false,
-    correctReading: "あさひかわ",
-  });
+async function onAnswer() {
+  if (state.value.phase !== "question") {
+    return;
+  }
+
+  const sessionId = state.value.sessionId;
+  const questionId = state.value.questionId;
+  const answer = answerInput.value;
+
+  if (!sessionId || !questionId) {
+    return;
+  }
+  // 回答APIを呼び出し
+  const response: AnswerResponse = await submitAnswer(
+    sessionId,
+    questionId,
+    answer
+  );
+
+  // APIレスポンスをpayloadに変換してstateを更新
+  state.value = answerQuestion(state.value, toAnswerPayload(response));
 }
 
 /**
@@ -112,6 +131,8 @@ function onNext() {
     <!-- question -->
     <div v-else-if="state.phase === 'question'">
       <p>{{ state.placeName }}</p>
+
+      <input type="text" v-model="answerInput", placeholder="ひらがなで入力" />
       <button @click="onAnswer">回答する</button>
     </div>
 

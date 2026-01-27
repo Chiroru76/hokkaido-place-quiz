@@ -27,6 +27,7 @@ export function answerQuestion(
   payload: {
     correct: boolean;
     correctReading?: string;
+    correctCount: number;
   },
 ): AnsweredState {
   if (state.phase !== "question") {
@@ -38,6 +39,7 @@ export function answerQuestion(
     phase: "answered",
     correct: payload.correct,
     correctReading: payload.correctReading,
+    correctCount: payload.correctCount,
   };
 }
 
