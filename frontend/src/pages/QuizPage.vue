@@ -170,6 +170,22 @@ function onRetry() {
   answerInput.value = "";
 }
 
+/**
+ * Xでシェア
+ */
+function shareToX() {
+  const text = `北海道地名読みクイズ
+今回: ${state.value.correctCount} / ${state.value.total} 問正解！
+累計: ${achievedCount.value} / 179 市町村クリア
+
+#北海道地名読みクイズ`;
+
+  const url = import.meta.env.VITE_APP_URL || 'https://hokkaido-place-quiz.example.com';
+  const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+
+  window.open(shareUrl, '_blank', 'width=550,height=420');
+}
+
 useKeyboard({
   Enter: () => {
     if (state.value.phase === "question") {
@@ -313,9 +329,14 @@ useKeyboard({
           </n-space>
         </n-card>
 
-        <n-button type="primary" size="large" @click="onRetry">
-          もう一度挑戦
-        </n-button>
+        <n-space horizontal size="medium">
+          <n-button type="primary" size="large" @click="onRetry">
+            もう一度挑戦
+          </n-button>
+          <n-button size="large" @click="shareToX">
+            Xでシェア
+          </n-button>
+        </n-space>
       </n-space>
     </div>
   </div>
