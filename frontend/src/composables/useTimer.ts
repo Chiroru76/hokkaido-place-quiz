@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, onUnmounted, ref } from "vue";
 
 export function useTimer() {
   // 経過時間（秒）
@@ -39,6 +39,10 @@ export function useTimer() {
     const ss = String(seconds).padStart(2, "0");
 
     return `${mm}:${ss}`;
+  });
+
+  onUnmounted(() => {
+    stop();
   });
 
   return {
