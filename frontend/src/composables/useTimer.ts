@@ -16,8 +16,17 @@ export function useTimer() {
     }, 1000);
   };
 
+  // タイマー停止
+  const stop = () => {
+    if (intervalId === null) return;
+
+    clearInterval(intervalId);
+    intervalId = null;
+  };
+
   return {
     elapsedTime,
     start,
+    stop,
   };
 }
