@@ -9,6 +9,7 @@ import {
 } from "../state/transitions";
 import { startSession, fetchNextQuestion, submitAnswer } from "../api/quizApi";
 import { useAchievedMunicipalities } from "../composables/useAchievedMunicipalities";
+import { useKeyboard } from "../composables/useKeyboard";
 import { useTimer } from "../composables/useTimer";
 import HokkaidoMap from "../components/HokkaidoMap.vue";
 
@@ -168,6 +169,18 @@ function onRetry() {
   state.value = { ...initialQuizState };
   answerInput.value = "";
 }
+
+useKeyboard({
+  Enter: () => {
+    if (state.value.phase === "question") {
+      onAnswer();
+      return;
+    }
+    if (state.value.phase === "answered") {
+      onNext();
+    }
+  },
+});
 </script>
 
 <template>
