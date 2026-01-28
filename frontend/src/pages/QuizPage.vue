@@ -329,9 +329,14 @@ useKeyboard({
           </n-space>
         </n-card>
 
-        <n-button type="primary" size="large" @click="onRetry">
-          もう一度挑戦
-        </n-button>
+        <n-space horizontal size="medium">
+          <n-button type="primary" size="large" @click="onRetry">
+            もう一度挑戦
+          </n-button>
+          <n-button size="large" @click="shareToX">
+            Xでシェア
+          </n-button>
+        </n-space>
       </n-space>
     </div>
   </div>
