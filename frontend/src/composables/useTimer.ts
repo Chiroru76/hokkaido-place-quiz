@@ -24,9 +24,16 @@ export function useTimer() {
     intervalId = null;
   };
 
+  // タイマーをリセット
+  const reset = () => {
+    stop();
+    elapsedTime.value = 0;
+  };
+
   return {
     elapsedTime,
     start,
     stop,
+    reset,
   };
 }
