@@ -8,9 +8,17 @@ import {
   nextQuestion,
 } from "./state/transitions";
 import { startSession, fetchNextQuestion, submitAnswer } from "./api/quizApi";
+import { useAchievedMunicipalities } from "./composables/useAchievedMunicipalities";
+import HokkaidoMap from "./components/HokkaidoMap.vue";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
+
+// 正解済み市町村管理
+const { markAsAchieved, achievedCount, achievementRate } = useAchievedMunicipalities();
+
+// Google Maps APIキーを環境変数から取得
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // APIのレスポンス型（snake_case）を定義する
 type SessionResponse = {
@@ -109,6 +117,11 @@ async function onAnswer() {
 
   // APIレスポンスをpayloadに変換してstateを更新
   state.value = answerQuestion(state.value, toAnswerPayload(response));
+
+  // 正解の場合、市町村を正解済みとして記録
+  if (response.correct) {
+    markAsAchieved(state.value.placeName);
+  }
 
   answerInput.value = "";
 }
@@ -219,6 +232,19 @@ function onRetry() {
           type="error"
           :title="`不正解（正解: ${state.correctReading}）`"
         />
+
+        <n-card title="場所を確認" size="small">
+          <iframe
+            v-if="googleMapsApiKey"
+            width="100%"
+            height="300"
+            frameborder="0"
+            style="border:0; border-radius: 8px;"
+            v-bind:src="`https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${state.placeName},北海道&zoom=10`"
+          ></iframe>
+          <p v-else style="color: #999;">地図を表示するにはAPIキーが必要です</p>
+        </n-card>
+
         <n-button type="primary" size="large" block @click="onNext">
           次へ
         </n-button>
@@ -246,6 +272,26 @@ function onRetry() {
           title="もう少し頑張りましょう！"
           :description="`${state.correctCount} / ${state.total} 問正解`"
         />
+
+        <n-card title="達成状況マップ" size="small" style="width: 100%;">
+          <n-space vertical size="small">
+            <n-space vertical size="small">
+              <n-space justify="space-between">
+                <span style="font-size: 16px; font-weight: bold;">正解済み市町村数: {{ achievedCount }} / 179</span>
+                <span style="font-size: 16px; font-weight: bold;">達成率: {{ achievementRate }}%</span>
+              </n-space>
+              <n-progress
+                :percentage="achievementRate"
+                :show-indicator="false"
+              />
+            </n-space>
+            <HokkaidoMap />
+            <p style="font-size: 12px; color: #666; text-align: center;">
+              緑色が正解済みの市町村です
+            </p>
+          </n-space>
+        </n-card>
+
         <n-button type="primary" size="large" @click="onRetry">
           もう一度挑戦
         </n-button>
