@@ -9,10 +9,12 @@ import {
 } from "../state/transitions";
 import { startSession, fetchNextQuestion, submitAnswer } from "../api/quizApi";
 import { useAchievedMunicipalities } from "../composables/useAchievedMunicipalities";
+import { useTimer } from "../composables/useTimer";
 import HokkaidoMap from "../components/HokkaidoMap.vue";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
+const { formattedTime, start, stop, reset } = useTimer();
 
 // 正解済み市町村管理
 const { markAsAchieved, achievedCount, achievementRate } = useAchievedMunicipalities();
@@ -79,6 +81,8 @@ function toAnswerPayload(res: AnswerResponse) {
  * スタートボタン
  */
 async function onStart() {
+  reset();
+  start();
   // セッション開始
   const session: SessionResponse = await startSession(10);
 
@@ -143,6 +147,7 @@ async function onNext() {
   const next: NextQuestionResponse = await fetchNextQuestion(sessionId);
 
   if (next.completed) {
+    stop();
     state.value = {
       phase: "completed",
       sessionId: state.value.sessionId,
@@ -158,6 +163,8 @@ async function onNext() {
  * もう一度挑戦
  */
 function onRetry() {
+  stop();
+  reset();
   state.value = { ...initialQuizState };
   answerInput.value = "";
 }
@@ -195,6 +202,7 @@ function onRetry() {
               <span>問題 {{ state.currentIndex + 1 }} / {{ state.total }}</span>
               <span>正解数：{{ state.correctCount }}</span>
             </n-space>
+            <span>経過時間: {{ formattedTime }}</span>
             <n-progress
               :percentage="((state.currentIndex + 1) / state.total) * 100"
               :show-indicator="false"
