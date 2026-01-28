@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 export function useTimer() {
   // 経過時間（秒）
@@ -30,8 +30,20 @@ export function useTimer() {
     elapsedTime.value = 0;
   };
 
+  // MM:SS 表記に変換
+  const formattedTime = computed(() => {
+    const minutes = Math.floor(elapsedTime.value / 60);
+    const seconds = elapsedTime.value % 60;
+
+    const mm = String(minutes).padStart(2, "0");
+    const ss = String(seconds).padStart(2, "0");
+
+    return `${mm}:${ss}`;
+  });
+
   return {
     elapsedTime,
+    formattedTime,
     start,
     stop,
     reset,
