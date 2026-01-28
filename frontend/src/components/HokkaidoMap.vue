@@ -12,7 +12,7 @@ let geoJsonLayer: L.GeoJSON | null = null;
  * 市町村ポリゴンのスタイルを決定
  */
 function getFeatureStyle(feature: any): L.PathOptions {
-  const municipalityName = feature.properties.N03_004 || feature.properties.N03_003;
+  const municipalityName = feature.properties.市町村名;
   const achieved = isAchieved(municipalityName);
 
   return {
@@ -27,7 +27,7 @@ function getFeatureStyle(feature: any): L.PathOptions {
  * 各市町村ポリゴンにインタラクションを設定
  */
 function onEachFeature(feature: any, layer: L.Layer) {
-  const municipalityName = feature.properties.N03_004 || feature.properties.N03_003;
+  const municipalityName = feature.properties.市町村名;
 
   if (municipalityName) {
     // ツールチップ（ホバー時に表示）
@@ -112,8 +112,8 @@ watch(achievedList, () => {
 
 <style scoped>
 .map-container {
-  width: 100%;
-  height: 400px;
+  width: 600px;
+  height:  600px;
   border-radius: 8px;
   overflow: hidden;
 }

@@ -275,9 +275,15 @@ function onRetry() {
 
         <n-card title="達成状況マップ" size="small" style="width: 100%;">
           <n-space vertical size="small">
-            <n-space justify="space-between">
-              <span>正解済み市町村数: {{ achievedCount }} / 179</span>
-              <span>達成率: {{ achievementRate }}%</span>
+            <n-space vertical size="small">
+              <n-space justify="space-between">
+                <span style="font-size: 16px; font-weight: bold;">正解済み市町村数: {{ achievedCount }} / 179</span>
+                <span style="font-size: 16px; font-weight: bold;">達成率: {{ achievementRate }}%</span>
+              </n-space>
+              <n-progress
+                :percentage="achievementRate"
+                :show-indicator="false"
+              />
             </n-space>
             <HokkaidoMap />
             <p style="font-size: 12px; color: #666; text-align: center;">
