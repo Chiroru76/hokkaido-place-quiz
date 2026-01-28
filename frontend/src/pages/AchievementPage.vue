@@ -6,8 +6,8 @@ const { achievedCount, achievementRate } = useAchievedMunicipalities();
 </script>
 
 <template>
-  <div class="achievement-container">
-    <h1>達成状況</h1>
+  <div>
+    <h1 class="page-title">達成状況</h1>
 
     <n-space vertical size="large">
       <n-card title="全体の達成状況" size="small">
@@ -46,21 +46,9 @@ const { achievedCount, achievementRate } = useAchievedMunicipalities();
 </template>
 
 <style scoped>
-.achievement-container {
-  min-height: 100vh;
-  background: linear-gradient(to bottom, #e3f2fd 0%, #f0f8ff 100%);
-  padding: 40px 16px;
-  color: #000000;
-}
-
-.achievement-container > * {
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.achievement-container h1 {
+.page-title {
   color: #000000;
   text-align: center;
+  margin-bottom: 24px;
 }
 </style>

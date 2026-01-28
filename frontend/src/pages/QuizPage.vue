@@ -164,8 +164,8 @@ function onRetry() {
 </script>
 
 <template>
-  <div class="app-container">
-    <h1>北海道地名読みクイズ</h1>
+  <div>
+    <h1 class="page-title">北海道地名読みクイズ</h1>
 
     <!-- idle -->
     <div v-if="state.phase === 'idle'">
@@ -301,24 +301,12 @@ function onRetry() {
 </template>
 
 <style scoped>
-.app-container {
-  min-height: 100vh;
-  background: linear-gradient(to bottom, #e3f2fd 0%, #f0f8ff 100%);
-  padding: 40px 16px;
+.page-title {
   color: #000000;
+  margin-bottom: 24px;
 }
 
-.app-container > * {
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.app-container h1 {
-  color: #000000;
-}
-
-.app-container p {
+p {
   color: #000000;
 }
 </style>
