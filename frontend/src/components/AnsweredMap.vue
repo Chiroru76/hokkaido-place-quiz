@@ -1,6 +1,7 @@
 <script setup lang="ts">
+/// <reference types="@types/google.maps" />
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { Loader } from '@googlemaps/js-api-loader';
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 
 /**
  * Props定義
@@ -21,6 +22,9 @@ const errorMessage = ref('');
 let map: google.maps.Map | null = null;
 let marker: google.maps.Marker | null = null;
 
+// GeoJSONデータのキャッシュ
+let geojsonData: any = null;
+
 // Google Maps API キー
 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -40,17 +44,17 @@ async function initMap() {
   }
 
   try {
-    // Google Maps API の読み込み
-    const loader = new Loader({
-      apiKey: apiKey,
-      version: 'weekly',
-      libraries: ['places'],
+    // Google Maps API の設定
+    setOptions({
+      key: apiKey,
+      v: 'weekly',
     });
 
-    await loader.load();
+    // Maps ライブラリの読み込み
+    const { Map } = await importLibrary('maps');
 
     // 地図の作成（北海道の中心付近）
-    map = new google.maps.Map(mapContainer.value, {
+    map = new Map(mapContainer.value, {
       center: { lat: 43.2, lng: 142.8 },
       zoom: 10,
       mapTypeControl: true,
@@ -59,12 +63,103 @@ async function initMap() {
     });
 
     isLoading.value = false;
+
+    // GeoJSONデータを読み込んでポリゴンを表示
+    await loadAndDisplayPolygon();
   } catch (error) {
     console.error('Failed to load Google Maps:', error);
     hasError.value = true;
     errorMessage.value = '地図を読み込めませんでした';
     isLoading.value = false;
   }
+}
+
+/**
+ * GeoJSONデータを読み込む
+ */
+async function loadGeoJson() {
+  if (geojsonData) {
+    return geojsonData;
+  }
+
+  try {
+    const response = await fetch('/data/hokkaido.geojson');
+    geojsonData = await response.json();
+    return geojsonData;
+  } catch (error) {
+    console.error('Failed to load GeoJSON data:', error);
+    return null;
+  }
+}
+
+/**
+ * 市町村名でGeoJSONをフィルタリング
+ */
+function filterMunicipalityGeoJson(data: any, municipalityName: string) {
+  if (!data || !data.features) {
+    return null;
+  }
+
+  const features = data.features.filter((feature: any) => {
+    return feature.properties?.市町村名 === municipalityName;
+  });
+
+  if (features.length === 0) {
+    return null;
+  }
+
+  return {
+    type: 'FeatureCollection',
+    features: features,
+  };
+}
+
+/**
+ * ポリゴンを地図に表示
+ */
+async function loadAndDisplayPolygon() {
+  if (!map || !props.placeName) {
+    return;
+  }
+
+  // 既存のポリゴンをクリア
+  map.data.forEach((feature: google.maps.Data.Feature) => {
+    map!.data.remove(feature);
+  });
+
+  // GeoJSONデータを読み込み
+  const data = await loadGeoJson();
+  if (!data) {
+    console.warn('GeoJSON data could not be loaded');
+    return;
+  }
+
+  // 市町村でフィルタリング
+  const filteredData = filterMunicipalityGeoJson(data, props.placeName);
+  if (!filteredData) {
+    console.warn(`Municipality not found: ${props.placeName}`);
+    return;
+  }
+
+  // ポリゴンを地図に追加
+  map.data.addGeoJson(filteredData);
+
+  // ポリゴンのスタイルを設定
+  map.data.setStyle({
+    fillColor: '#4caf50',
+    fillOpacity: 0.6,
+    strokeColor: '#ffffff',
+    strokeWeight: 2,
+  });
+
+  // ポリゴンの境界に合わせて地図の表示範囲を調整
+  const bounds = new google.maps.LatLngBounds();
+  map.data.forEach((feature) => {
+    feature.getGeometry()?.forEachLatLng((latLng) => {
+      bounds.extend(latLng);
+    });
+  });
+  map.fitBounds(bounds);
 }
 
 /**
@@ -91,9 +186,11 @@ onUnmounted(() => {
 /**
  * placeNameが変更されたら地図を更新
  */
-watch(() => props.placeName, () => {
-  // TODO: Phase 4 でマーカー表示を実装
-  console.log('Place name changed:', props.placeName);
+watch(() => props.placeName, async () => {
+  if (props.placeName) {
+    await loadAndDisplayPolygon();
+    // TODO: Phase 4 でマーカー表示を実装
+  }
 });
 </script>
 
