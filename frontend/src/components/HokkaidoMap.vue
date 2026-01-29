@@ -127,26 +127,42 @@ function setupHoverInteractions() {
     return;
   }
 
-  // InfoWindowを作成（ツールチップ用）
-  infoWindow = new google.maps.InfoWindow();
+  // InfoWindowを作成（ツールチップ用、閉じるボタンなし）
+  infoWindow = new google.maps.InfoWindow({
+    disableAutoPan: true, // 自動パンを無効化（ツールチップのような動作）
+  });
 
   // マウスオーバー時：ツールチップ表示とハイライト
   map.data.addListener('mouseover', (event: google.maps.Data.MouseEvent) => {
     const municipalityName = event.feature.getProperty('市町村名');
+    const achieved = isAchieved(municipalityName as string);
 
     if (municipalityName && infoWindow) {
-      // ツールチップ表示
-      infoWindow.setContent(`<div style="padding: 4px 8px; font-size: 14px;">${municipalityName}</div>`);
+      // ツールチップのHTML
+      const tooltipContent = `
+        <div style="padding: 8px 10px; min-width: 60px;">
+          <div style="font-size: 15px; font-weight: bold; color: #333; margin-bottom: 5px;">
+            ${municipalityName}
+          </div>
+          <div style="display: flex; align-items: center; gap: 5px; font-size: 14px;">
+            <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: ${achieved ? '#4caf50' : '#b0b0b0'};"></span>
+            <span style="color: ${achieved ? '#4caf50' : '#666'};">
+              ${achieved ? '正解' : '未正解'}
+            </span>
+          </div>
+        </div>
+      `;
+
+      infoWindow.setContent(tooltipContent);
       infoWindow.setPosition(event.latLng);
       infoWindow.open(map);
     }
 
     // ハイライト効果
-    const achieved = isAchieved(municipalityName as string);
     map!.data.overrideStyle(event.feature, {
       strokeWeight: 2,
       fillOpacity: 0.8,
-      fillColor: achieved ? '#4caf50' : '#e0e0e0',
+      fillColor: achieved ? '#4caf50' : '#b0b0b0',
     });
   });
 
@@ -243,5 +259,21 @@ watch(achievedList, () => {
   justify-content: center;
   height: 100%;
   padding: 16px;
+}
+</style>
+
+<style>
+/* Google Maps InfoWindowの閉じるボタンを非表示 */
+.gm-style-iw-chr {
+  display: none !important;
+}
+
+/* InfoWindowのパディング調整 */
+.gm-style-iw {
+  padding: 0 !important;
+}
+
+.gm-style-iw-d {
+  overflow: hidden !important;
 }
 </style>
