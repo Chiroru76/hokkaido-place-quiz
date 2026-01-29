@@ -14,6 +14,7 @@ const errorMessage = ref('');
 
 // Google Maps インスタンス
 let map: google.maps.Map | null = null;
+let infoWindow: google.maps.InfoWindow | null = null;
 
 // GeoJSONデータのキャッシュ
 let geojsonData: any = null;
@@ -89,6 +90,9 @@ async function initMap() {
 
     // 達成状況に応じた動的スタイリングを設定
     updateMapStyle();
+
+    // ホバー時のインタラクションを設定
+    setupHoverInteractions();
   } catch (error) {
     console.error('Failed to load Google Maps:', error);
     hasError.value = true;
@@ -120,6 +124,48 @@ function updateMapStyle() {
 }
 
 /**
+ * ホバー時のインタラクション（ツールチップ、ハイライト）を設定
+ */
+function setupHoverInteractions() {
+  if (!map) {
+    return;
+  }
+
+  // InfoWindowを作成（ツールチップ用）
+  infoWindow = new google.maps.InfoWindow();
+
+  // マウスオーバー時：ツールチップ表示とハイライト
+  map.data.addListener('mouseover', (event: google.maps.Data.MouseEvent) => {
+    const municipalityName = event.feature.getProperty('市町村名');
+
+    if (municipalityName && infoWindow) {
+      // ツールチップ表示
+      infoWindow.setContent(`<div style="padding: 4px 8px; font-size: 14px;">${municipalityName}</div>`);
+      infoWindow.setPosition(event.latLng);
+      infoWindow.open(map);
+    }
+
+    // ハイライト効果
+    const achieved = isAchieved(municipalityName as string);
+    map!.data.overrideStyle(event.feature, {
+      strokeWeight: 2,
+      fillOpacity: 0.8,
+      fillColor: achieved ? '#4caf50' : '#e0e0e0',
+    });
+  });
+
+  // マウスアウト時：ツールチップを閉じてスタイルを元に戻す
+  map.data.addListener('mouseout', (event: google.maps.Data.MouseEvent) => {
+    if (infoWindow) {
+      infoWindow.close();
+    }
+
+    // スタイルをデフォルトに戻す
+    map!.data.revertStyle(event.feature);
+  });
+}
+
+/**
  * コンポーネントのマウント時に地図を初期化
  */
 onMounted(() => {
@@ -130,6 +176,12 @@ onMounted(() => {
  * コンポーネントのアンマウント時のクリーンアップ
  */
 onUnmounted(() => {
+  // InfoWindowのクリーンアップ
+  if (infoWindow) {
+    infoWindow.close();
+    infoWindow = null;
+  }
+
   // 地図インスタンスの破棄
   map = null;
 });
