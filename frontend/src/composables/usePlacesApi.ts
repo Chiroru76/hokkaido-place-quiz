@@ -71,56 +71,40 @@ async function getMunicipalityCenterFromGeoJson(
   }
 
   // 市町村でフィルタリング
-  const features = data.features.filter((feature: any) => {
-    return feature.properties?.市町村名 === municipalityName;
-  });
+  const features = data.features.filter((feature: any) =>
+    feature.properties?.市町村名 === municipalityName
+  );
 
   if (features.length === 0) {
     return null;
   }
 
-  // 境界ボックスを計算して中心座標を取得
-  let minLat = Infinity;
-  let maxLat = -Infinity;
-  let minLng = Infinity;
-  let maxLng = -Infinity;
+  // Google Maps LatLngBounds を使用して境界を計算
+  const bounds = new google.maps.LatLngBounds();
 
   features.forEach((feature: any) => {
     const geometry = feature.geometry;
-    if (geometry?.type === 'Polygon' && geometry.coordinates?.[0]) {
-      geometry.coordinates[0].forEach((coord: number[]) => {
+    // Polygon と MultiPolygon の処理を統一
+    const rings = geometry?.type === 'Polygon'
+      ? [geometry.coordinates[0]]
+      : geometry?.type === 'MultiPolygon'
+      ? geometry.coordinates.map((polygon: number[][][]) => polygon[0])
+      : [];
+
+    rings.forEach((ring: number[][]) => {
+      ring?.forEach((coord: number[]) => {
         if (coord.length >= 2 && typeof coord[0] === 'number' && typeof coord[1] === 'number') {
-          const lng = coord[0];
-          const lat = coord[1];
-          minLat = Math.min(minLat, lat);
-          maxLat = Math.max(maxLat, lat);
-          minLng = Math.min(minLng, lng);
-          maxLng = Math.max(maxLng, lng);
+          bounds.extend(new google.maps.LatLng(coord[1], coord[0]));
         }
       });
-    } else if (geometry?.type === 'MultiPolygon' && geometry.coordinates) {
-      geometry.coordinates.forEach((polygon: number[][][]) => {
-        polygon[0]?.forEach((coord: number[]) => {
-          if (coord.length >= 2 && typeof coord[0] === 'number' && typeof coord[1] === 'number') {
-            const lng = coord[0];
-            const lat = coord[1];
-            minLat = Math.min(minLat, lat);
-            maxLat = Math.max(maxLat, lat);
-            minLng = Math.min(minLng, lng);
-            maxLng = Math.max(maxLng, lng);
-          }
-        });
-      });
-    }
+    });
   });
 
-  // 中心座標を計算
-  const centerLat = (minLat + maxLat) / 2;
-  const centerLng = (minLng + maxLng) / 2;
-
+  // 中心座標を取得
+  const center = bounds.getCenter();
   return {
-    lat: centerLat,
-    lng: centerLng,
+    lat: center.lat(),
+    lng: center.lng(),
   };
 }
 
