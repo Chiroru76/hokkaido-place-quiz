@@ -20,7 +20,7 @@ const errorMessage = ref('');
 
 // Google Maps インスタンス
 let map: google.maps.Map | null = null;
-let marker: google.maps.Marker | null = null;
+let marker: google.maps.marker.AdvancedMarkerElement | null = null;
 
 // GeoJSONデータのキャッシュ
 let geojsonData: any = null;
@@ -53,13 +53,14 @@ async function initMap() {
     // Maps ライブラリの読み込み
     const { Map } = await importLibrary('maps');
 
-    // 地図の作成（北海道の中心付近）
+    // 地図の作成（北海道の中心付近、mapIdを指定してAdvancedMarkerを使用可能に）
     map = new Map(mapContainer.value, {
       center: { lat: 43.2, lng: 142.8 },
       zoom: 10,
       mapTypeControl: true,
       streetViewControl: false,
       fullscreenControl: true,
+      mapId: 'HOKKAIDO_MAP', // AdvancedMarkerElement使用のために必要
     });
 
     isLoading.value = false;
@@ -115,7 +116,7 @@ function filterMunicipalityGeoJson(data: any, municipalityName: string) {
 }
 
 /**
- * ポリゴンを地図に表示
+ * ポリゴンとマーカーを地図に表示
  */
 async function loadAndDisplayPolygon() {
   if (!map || !props.placeName) {
@@ -126,6 +127,12 @@ async function loadAndDisplayPolygon() {
   map.data.forEach((feature: google.maps.Data.Feature) => {
     map!.data.remove(feature);
   });
+
+  // 既存のマーカーをクリア
+  if (marker) {
+    marker.map = null;
+    marker = null;
+  }
 
   // GeoJSONデータを読み込み
   const data = await loadGeoJson();
@@ -160,6 +167,19 @@ async function loadAndDisplayPolygon() {
     });
   });
   map.fitBounds(bounds);
+
+  // 市町村の中心座標を計算してマーカーを配置
+  const center = bounds.getCenter();
+  if (center) {
+    // Marker ライブラリの読み込み
+    const { AdvancedMarkerElement } = await importLibrary('marker');
+
+    marker = new AdvancedMarkerElement({
+      position: center,
+      map: map,
+      title: props.placeName,
+    });
+  }
 }
 
 /**
@@ -175,7 +195,7 @@ onMounted(() => {
 onUnmounted(() => {
   // マーカーの破棄
   if (marker) {
-    marker.setMap(null);
+    marker.map = null;
     marker = null;
   }
 
