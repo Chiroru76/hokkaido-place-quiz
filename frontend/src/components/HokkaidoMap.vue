@@ -87,13 +87,8 @@ async function initMap() {
     // 全市町村のポリゴンを地図に追加
     map.data.addGeoJson(data);
 
-    // 初期スタイルを設定（Phase 2で達成状況に応じたスタイルに変更）
-    map.data.setStyle({
-      fillColor: '#e0e0e0',
-      fillOpacity: 0.6,
-      strokeColor: '#ffffff',
-      strokeWeight: 1,
-    });
+    // 達成状況に応じた動的スタイリングを設定
+    updateMapStyle();
   } catch (error) {
     console.error('Failed to load Google Maps:', error);
     hasError.value = true;
@@ -103,11 +98,25 @@ async function initMap() {
 }
 
 /**
- * 地図の更新（達成状況が変わったとき）
- * Phase 2で達成状況に応じたスタイリングを実装予定
+ * 達成状況に応じて地図のスタイルを更新
  */
-function updateMap() {
-  // Phase 2で実装
+function updateMapStyle() {
+  if (!map) {
+    return;
+  }
+
+  // 各市町村の達成状況に応じてスタイルを動的に設定
+  map.data.setStyle((feature: google.maps.Data.Feature) => {
+    const municipalityName = feature.getProperty('市町村名');
+    const achieved = isAchieved(municipalityName as string);
+
+    return {
+      fillColor: achieved ? '#4caf50' : '#e0e0e0',
+      fillOpacity: 0.6,
+      strokeColor: '#ffffff',
+      strokeWeight: 1,
+    };
+  });
 }
 
 /**
@@ -126,10 +135,10 @@ onUnmounted(() => {
 });
 
 /**
- * 達成リストが変わったら地図を更新
+ * 達成リストが変わったら地図のスタイルを更新
  */
 watch(achievedList, () => {
-  updateMap();
+  updateMapStyle();
 });
 </script>
 
