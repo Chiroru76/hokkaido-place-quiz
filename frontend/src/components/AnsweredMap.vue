@@ -54,10 +54,10 @@ async function initMap() {
     // Maps ライブラリの読み込み
     const { Map } = await importLibrary('maps');
 
-    // 地図の作成（北海道の中心付近、mapIdを指定してAdvancedMarkerを使用可能に）
+    // 地図の作成（北海道全体が見えるビュー、mapIdを指定してAdvancedMarkerを使用可能に）
     map = new Map(mapContainer.value, {
       center: { lat: 43.2, lng: 142.8 },
-      zoom: 10,
+      zoom: 6.5, // 北海道全体が見えるズームレベル
       mapTypeControl: true,
       streetViewControl: false,
       fullscreenControl: true,
@@ -66,8 +66,13 @@ async function initMap() {
 
     isLoading.value = false;
 
-    // GeoJSONデータを読み込んでポリゴンを表示
-    await loadAndDisplayPolygon();
+    // GeoJSONデータを読み込んで全市町村を表示
+    await loadAllMunicipalities();
+
+    // 初期表示時に指定された市町村があればハイライト
+    if (props.placeName) {
+      await loadAndDisplayPolygon();
+    }
   } catch (error) {
     console.error('Failed to load Google Maps:', error);
     hasError.value = true;
@@ -117,10 +122,10 @@ function filterMunicipalityGeoJson(data: any, municipalityName: string) {
 }
 
 /**
- * ポリゴンとマーカーを地図に表示
+ * 全市町村のポリゴンを地図に表示（初期表示時）
  */
-async function loadAndDisplayPolygon() {
-  if (!map || !props.placeName) {
+async function loadAllMunicipalities() {
+  if (!map) {
     return;
   }
 
@@ -128,6 +133,94 @@ async function loadAndDisplayPolygon() {
   map.data.forEach((feature: google.maps.Data.Feature) => {
     map!.data.remove(feature);
   });
+
+  // GeoJSONデータを読み込み
+  const data = await loadGeoJson();
+  if (!data) {
+    console.warn('GeoJSON data could not be loaded');
+    return;
+  }
+
+  // 全市町村のポリゴンを地図に追加
+  map.data.addGeoJson(data);
+
+  // ポリゴンのスタイルを設定（全て灰色で表示）
+  map.data.setStyle({
+    fillColor: '#e0e0e0',
+    fillOpacity: 0.3,
+    strokeColor: '#ffffff',
+    strokeWeight: 1,
+  });
+}
+
+/**
+ * 市町村へスムーズにズームインする（2-3秒のアニメーション）
+ */
+async function zoomToMunicipality(bounds: google.maps.LatLngBounds) {
+  if (!map) {
+    return;
+  }
+
+  const currentMap = map;
+  const targetCenter = bounds.getCenter();
+
+  // 目標ズームレベルを計算（fitBoundsと同等のズームレベル）
+  const targetZoom = getZoomForBounds(bounds);
+
+  return new Promise<void>((resolve) => {
+    let animationComplete = false;
+
+    // アニメーション完了を検知するリスナー
+    const idleListener = currentMap.addListener('idle', () => {
+      if (animationComplete) {
+        google.maps.event.removeListener(idleListener);
+        resolve();
+      }
+    });
+
+    // Step 1: まず中心座標にパン（1秒程度）
+    currentMap.panTo(targetCenter);
+
+    // Step 2: 1秒後にズームを開始
+    setTimeout(() => {
+      currentMap.setZoom(targetZoom);
+
+      // Step 3: さらに1秒後にアニメーション完了フラグを立てる
+      setTimeout(() => {
+        animationComplete = true;
+      }, 1000);
+    }, 1000);
+  });
+}
+
+/**
+ * 境界ボックスに適したズームレベルを計算
+ */
+function getZoomForBounds(bounds: google.maps.LatLngBounds): number {
+  if (!map) {
+    return 10;
+  }
+
+  // 一時的にfitBoundsして最適なズームレベルを取得
+  const currentZoom = map.getZoom();
+  map.fitBounds(bounds, 50);
+  const optimalZoom = map.getZoom() || 10;
+
+  // 元のズームレベルに戻す
+  if (currentZoom) {
+    map.setZoom(currentZoom);
+  }
+
+  return optimalZoom;
+}
+
+/**
+ * ポリゴンとマーカーを地図に表示
+ */
+async function loadAndDisplayPolygon() {
+  if (!map || !props.placeName) {
+    return;
+  }
 
   // 既存のマーカーをクリア
   if (marker) {
@@ -142,45 +235,69 @@ async function loadAndDisplayPolygon() {
     return;
   }
 
-  // 市町村でフィルタリング
+  // 市町村でフィルタリング（中心座標とマーカー配置用）
   const filteredData = filterMunicipalityGeoJson(data, props.placeName);
   if (!filteredData) {
     console.warn(`Municipality not found: ${props.placeName}`);
     return;
   }
 
-  // ポリゴンを地図に追加
-  map.data.addGeoJson(filteredData);
+  // ターゲット市町村のポリゴンをハイライト表示
+  map.data.setStyle((feature: google.maps.Data.Feature) => {
+    const municipalityName = feature.getProperty('市町村名');
+    const isTarget = municipalityName === props.placeName;
 
-  // ポリゴンのスタイルを設定
-  map.data.setStyle({
-    fillColor: '#4caf50',
-    fillOpacity: 0.6,
-    strokeColor: '#ffffff',
-    strokeWeight: 2,
+    return {
+      fillColor: isTarget ? '#4caf50' : '#e0e0e0',
+      fillOpacity: isTarget ? 0.6 : 0.3,
+      strokeColor: isTarget ? '#ffffff' : '#ffffff',
+      strokeWeight: isTarget ? 2 : 1,
+    };
   });
 
-  // ポリゴンの境界に合わせて地図の表示範囲を調整
+  // ターゲット市町村の境界ボックスと中心座標を計算
   const bounds = new google.maps.LatLngBounds();
-  map.data.forEach((feature) => {
-    feature.getGeometry()?.forEachLatLng((latLng) => {
-      bounds.extend(latLng);
-    });
+  filteredData.features.forEach((feature: any) => {
+    const geometry = feature.geometry;
+    if (geometry?.type === 'Polygon' && geometry.coordinates?.[0]) {
+      geometry.coordinates[0].forEach((coord: number[]) => {
+        if (coord.length >= 2 && typeof coord[0] === 'number' && typeof coord[1] === 'number') {
+          bounds.extend(new google.maps.LatLng(coord[1], coord[0]));
+        }
+      });
+    } else if (geometry?.type === 'MultiPolygon' && geometry.coordinates) {
+      geometry.coordinates.forEach((polygon: number[][][]) => {
+        polygon[0]?.forEach((coord: number[]) => {
+          if (coord.length >= 2 && typeof coord[0] === 'number' && typeof coord[1] === 'number') {
+            bounds.extend(new google.maps.LatLng(coord[1], coord[0]));
+          }
+        });
+      });
+    }
   });
-  map.fitBounds(bounds);
 
-  // 市町村の中心座標を計算してマーカーを配置
-  const center = bounds.getCenter();
-  if (center) {
-    // Marker ライブラリの読み込み
-    const { AdvancedMarkerElement } = await importLibrary('marker');
-
-    marker = new AdvancedMarkerElement({
-      position: center,
-      map: map,
-      title: props.placeName,
-    });
+  // boundsが空でないことを確認
+  if (bounds.isEmpty()) {
+    return;
   }
+
+  // 市町村の中心座標を取得
+  const center = bounds.getCenter();
+  if (!center) {
+    return;
+  }
+
+  // 北海道全体から該当市町村へスムーズにズームイン（2-3秒のアニメーション）
+  await zoomToMunicipality(bounds);
+
+  // アニメーション完了後、マーカーを配置
+  const { AdvancedMarkerElement } = await importLibrary('marker');
+
+  marker = new AdvancedMarkerElement({
+    position: center,
+    map: map,
+    title: props.placeName,
+  });
 }
 
 /**
