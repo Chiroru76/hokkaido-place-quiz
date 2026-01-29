@@ -12,6 +12,7 @@ import { useAchievedMunicipalities } from "../composables/useAchievedMunicipalit
 import { useKeyboard } from "../composables/useKeyboard";
 import { useTimer } from "../composables/useTimer";
 import HokkaidoMap from "../components/HokkaidoMap.vue";
+import AnsweredMap from "../components/AnsweredMap.vue";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
@@ -19,9 +20,6 @@ const { formattedTime, start, stop, reset } = useTimer();
 
 // 正解済み市町村管理
 const { markAsAchieved, achievedCount, achievementRate } = useAchievedMunicipalities();
-
-// Google Maps APIキーを環境変数から取得
-const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // APIのレスポンス型（snake_case）を定義する
 type SessionResponse = {
@@ -271,15 +269,7 @@ useKeyboard({
         />
 
         <n-card title="場所を確認" size="small">
-          <iframe
-            v-if="googleMapsApiKey"
-            width="100%"
-            height="300"
-            frameborder="0"
-            style="border:0; border-radius: 8px;"
-            v-bind:src="`https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${state.placeName},北海道&zoom=10`"
-          ></iframe>
-          <p v-else style="color: #999;">地図を表示するにはAPIキーが必要です</p>
+          <AnsweredMap :place-name="state.placeName" />
         </n-card>
 
         <n-button type="primary" size="large" block @click="onNext">
