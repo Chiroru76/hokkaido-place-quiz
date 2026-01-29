@@ -10,6 +10,7 @@ import {
 import { startSession, fetchNextQuestion, submitAnswer } from "../api/quizApi";
 import { useAchievedMunicipalities } from "../composables/useAchievedMunicipalities";
 import { useKeyboard } from "../composables/useKeyboard";
+import { useMunicipalityTrivia } from "../composables/useMunicipalityTrivia";
 import { useTimer } from "../composables/useTimer";
 import HokkaidoMap from "../components/HokkaidoMap.vue";
 import AnsweredMap from "../components/AnsweredMap.vue";
@@ -17,6 +18,7 @@ import AnsweredMap from "../components/AnsweredMap.vue";
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
 const { formattedTime, start, stop, reset } = useTimer();
+const { getTrivia } = useMunicipalityTrivia();
 
 // 正解済み市町村管理
 const { markAsAchieved, achievedCount, achievementRate } = useAchievedMunicipalities();
@@ -267,6 +269,14 @@ useKeyboard({
           type="error"
           :title="`不正解（正解: ${state.correctReading}）`"
         />
+
+        <n-card
+          v-if="getTrivia(state.placeName)"
+          title="豆知識💡"
+          size="small"
+        >
+          <p style="line-height: 1.8;">{{ getTrivia(state.placeName) }}</p>
+        </n-card>
 
         <n-card title="場所を確認" size="small">
           <AnsweredMap :place-name="state.placeName" />
