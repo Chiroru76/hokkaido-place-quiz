@@ -1,55 +1,42 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import L from 'leaflet';
+/// <reference types="@types/google.maps" />
+import { onMounted, ref, watch, onUnmounted } from 'vue';
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { useAchievedMunicipalities } from '../composables/useAchievedMunicipalities';
 
 const { isAchieved, achievedList } = useAchievedMunicipalities();
+
+// 地図表示用のref
 const mapContainer = ref<HTMLDivElement | null>(null);
-let map: L.Map | null = null;
-let geoJsonLayer: L.GeoJSON | null = null;
+const isLoading = ref(true);
+const hasError = ref(false);
+const errorMessage = ref('');
+
+// Google Maps インスタンス
+let map: google.maps.Map | null = null;
+
+// GeoJSONデータのキャッシュ
+let geojsonData: any = null;
+
+// Google Maps API キー
+const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID;
 
 /**
- * 市町村ポリゴンのスタイルを決定
+ * GeoJSONデータを読み込む
  */
-function getFeatureStyle(feature: any): L.PathOptions {
-  const municipalityName = feature.properties.市町村名;
-  const achieved = isAchieved(municipalityName);
+async function loadGeoJson() {
+  if (geojsonData) {
+    return geojsonData;
+  }
 
-  return {
-    fillColor: achieved ? '#4caf50' : '#e0e0e0',
-    fillOpacity: 0.6,
-    color: '#ffffff',
-    weight: 1,
-  };
-}
-
-/**
- * 各市町村ポリゴンにインタラクションを設定
- */
-function onEachFeature(feature: any, layer: L.Layer) {
-  const municipalityName = feature.properties.市町村名;
-
-  if (municipalityName) {
-    // ツールチップ（ホバー時に表示）
-    layer.bindTooltip(municipalityName, {
-      sticky: true,
-      className: 'municipality-tooltip',
-    });
-
-    // ホバー時のハイライト効果
-    layer.on('mouseover', function (this: L.Path) {
-      this.setStyle({
-        weight: 2,
-        fillOpacity: 0.8,
-      });
-    });
-
-    layer.on('mouseout', function (this: L.Path) {
-      this.setStyle({
-        weight: 1,
-        fillOpacity: 0.6,
-      });
-    });
+  try {
+    const response = await fetch('/data/hokkaido.geojson');
+    geojsonData = await response.json();
+    return geojsonData;
+  } catch (error) {
+    console.error('Failed to load GeoJSON data:', error);
+    return null;
   }
 }
 
@@ -57,76 +44,147 @@ function onEachFeature(feature: any, layer: L.Layer) {
  * 地図の初期化
  */
 async function initMap() {
-  if (!mapContainer.value) return;
+  if (!mapContainer.value) {
+    return;
+  }
 
-  // 地図の作成（北海道の中心付近）
-  map = L.map(mapContainer.value, {
-    center: [43.2, 142.8],
-    zoom: 7,
-    zoomControl: true,
-  });
+  if (!apiKey) {
+    hasError.value = true;
+    errorMessage.value = '地図を表示するにはAPIキーが必要です';
+    isLoading.value = false;
+    return;
+  }
 
-  // タイルレイヤーの追加（OpenStreetMap）
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map);
-
-  // GeoJSONデータの読み込み
   try {
-    const response = await fetch('/data/hokkaido.geojson');
-    const geojsonData = await response.json();
+    // Google Maps API の設定
+    setOptions({
+      key: apiKey,
+      v: 'weekly',
+    });
 
-    // GeoJSONレイヤーの追加
-    geoJsonLayer = L.geoJSON(geojsonData, {
-      style: getFeatureStyle,
-      onEachFeature: onEachFeature,
-    }).addTo(map);
+    // Maps ライブラリの読み込み
+    const { Map } = await importLibrary('maps');
+
+    // 地図の作成（北海道全体が見えるビュー）
+    map = new Map(mapContainer.value, {
+      center: { lat: 43.2, lng: 142.8 },
+      zoom: 7,
+      mapTypeControl: true,
+      streetViewControl: false,
+      fullscreenControl: true,
+      mapId: mapId, // Map ID を指定
+    });
+
+    isLoading.value = false;
+
+    // GeoJSONデータを読み込んで全市町村を表示
+    const data = await loadGeoJson();
+    if (!data) {
+      console.warn('GeoJSON data could not be loaded');
+      return;
+    }
+
+    // 全市町村のポリゴンを地図に追加
+    map.data.addGeoJson(data);
+
+    // 初期スタイルを設定（Phase 2で達成状況に応じたスタイルに変更）
+    map.data.setStyle({
+      fillColor: '#e0e0e0',
+      fillOpacity: 0.6,
+      strokeColor: '#ffffff',
+      strokeWeight: 1,
+    });
   } catch (error) {
-    console.error('Failed to load GeoJSON data:', error);
+    console.error('Failed to load Google Maps:', error);
+    hasError.value = true;
+    errorMessage.value = '地図を読み込めませんでした';
+    isLoading.value = false;
   }
 }
 
 /**
  * 地図の更新（達成状況が変わったとき）
+ * Phase 2で達成状況に応じたスタイリングを実装予定
  */
 function updateMap() {
-  if (geoJsonLayer) {
-    geoJsonLayer.setStyle(getFeatureStyle);
-  }
+  // Phase 2で実装
 }
 
-// マウント時に地図を初期化
+/**
+ * コンポーネントのマウント時に地図を初期化
+ */
 onMounted(() => {
   initMap();
 });
 
-// 達成リストが変わったら地図を更新
+/**
+ * コンポーネントのアンマウント時のクリーンアップ
+ */
+onUnmounted(() => {
+  // 地図インスタンスの破棄
+  map = null;
+});
+
+/**
+ * 達成リストが変わったら地図を更新
+ */
 watch(achievedList, () => {
   updateMap();
 });
 </script>
 
 <template>
-  <div ref="mapContainer" class="map-container"></div>
+  <div class="map-wrapper">
+    <!-- ローディング表示 -->
+    <div v-if="isLoading" class="loading-container">
+      <n-spin size="large" />
+      <p>地図を読み込んでいます...</p>
+    </div>
+
+    <!-- エラー表示 -->
+    <div v-else-if="hasError" class="error-container">
+      <n-alert type="error" :title="errorMessage" />
+    </div>
+
+    <!-- 地図表示エリア -->
+    <div ref="mapContainer" class="map-container"></div>
+  </div>
 </template>
 
 <style scoped>
-.map-container {
+.map-wrapper {
+  position: relative;
   width: 600px;
-  height:  600px;
+  height: 600px;
   border-radius: 8px;
   overflow: hidden;
 }
-</style>
 
-<style>
-/* ツールチップのスタイル（グローバル） */
-.municipality-tooltip {
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 14px;
+.map-container {
+  width: 100%;
+  height: 100%;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: #f5f5f5;
+  gap: 16px;
+}
+
+.loading-container p {
+  color: #666;
+  margin: 0;
+}
+
+.error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 16px;
 }
 </style>
