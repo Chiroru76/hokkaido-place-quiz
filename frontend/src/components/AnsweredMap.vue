@@ -27,6 +27,7 @@ let geojsonData: any = null;
 
 // Google Maps API キー
 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID;
 
 /**
  * 地図の初期化
@@ -60,7 +61,7 @@ async function initMap() {
       mapTypeControl: true,
       streetViewControl: false,
       fullscreenControl: true,
-      mapId: 'HOKKAIDO_MAP', // AdvancedMarkerElement使用のために必要
+      mapId: mapId, // AdvancedMarkerElement使用のために必要
     });
 
     isLoading.value = false;
