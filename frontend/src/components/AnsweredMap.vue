@@ -154,6 +154,67 @@ async function loadAllMunicipalities() {
 }
 
 /**
+ * 市町村へスムーズにズームインする（2-3秒のアニメーション）
+ */
+async function zoomToMunicipality(bounds: google.maps.LatLngBounds) {
+  if (!map) {
+    return;
+  }
+
+  const currentMap = map;
+  const targetCenter = bounds.getCenter();
+
+  // 目標ズームレベルを計算（fitBoundsと同等のズームレベル）
+  const targetZoom = getZoomForBounds(bounds);
+
+  return new Promise<void>((resolve) => {
+    let animationComplete = false;
+
+    // アニメーション完了を検知するリスナー
+    const idleListener = currentMap.addListener('idle', () => {
+      if (animationComplete) {
+        google.maps.event.removeListener(idleListener);
+        resolve();
+      }
+    });
+
+    // Step 1: まず中心座標にパン（1秒程度）
+    currentMap.panTo(targetCenter);
+
+    // Step 2: 1秒後にズームを開始
+    setTimeout(() => {
+      currentMap.setZoom(targetZoom);
+
+      // Step 3: さらに1秒後にアニメーション完了フラグを立てる
+      setTimeout(() => {
+        animationComplete = true;
+      }, 1000);
+    }, 1000);
+  });
+}
+
+/**
+ * 境界ボックスに適したズームレベルを計算
+ */
+function getZoomForBounds(bounds: google.maps.LatLngBounds): number {
+  if (!map) {
+    return 10;
+  }
+
+  // 一時的にfitBoundsして最適なズームレベルを取得
+  const currentZoom = map.getZoom();
+  map.fitBounds(bounds, 50);
+  const optimalZoom = map.getZoom() || 10;
+
+  // 元のズームレベルに戻す
+  if (currentZoom) {
+    map.setZoom(currentZoom);
+  }
+
+  return optimalZoom;
+}
+
+/**
  * ポリゴンとマーカーを地図に表示
  */
 async function loadAndDisplayPolygon() {
@@ -194,7 +255,7 @@ async function loadAndDisplayPolygon() {
     };
   });
 
-  // ターゲット市町村の境界に合わせて地図の表示範囲を調整
+  // ターゲット市町村の境界ボックスと中心座標を計算
   const bounds = new google.maps.LatLngBounds();
   filteredData.features.forEach((feature: any) => {
     const geometry = feature.geometry;
@@ -215,22 +276,28 @@ async function loadAndDisplayPolygon() {
     }
   });
 
-  if (!bounds.isEmpty()) {
-    map.fitBounds(bounds);
+  // boundsが空でないことを確認
+  if (bounds.isEmpty()) {
+    return;
   }
 
-  // 市町村の中心座標を計算してマーカーを配置
+  // 市町村の中心座標を取得
   const center = bounds.getCenter();
-  if (center) {
-    // Marker ライブラリの読み込み
-    const { AdvancedMarkerElement } = await importLibrary('marker');
-
-    marker = new AdvancedMarkerElement({
-      position: center,
-      map: map,
-      title: props.placeName,
-    });
+  if (!center) {
+    return;
   }
+
+  // 北海道全体から該当市町村へスムーズにズームイン（2-3秒のアニメーション）
+  await zoomToMunicipality(bounds);
+
+  // アニメーション完了後、マーカーを配置
+  const { AdvancedMarkerElement } = await importLibrary('marker');
+
+  marker = new AdvancedMarkerElement({
+    position: center,
+    map: map,
+    title: props.placeName,
+  });
 }
 
 /**
