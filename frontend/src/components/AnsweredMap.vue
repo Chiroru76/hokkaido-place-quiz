@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /// <reference types="@types/google.maps" />
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
+import { useGoogleMaps } from '../composables/useGoogleMaps';
 
 /**
  * Props定義
@@ -11,6 +11,9 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+// Google Maps composable
+const { apiKey, mapId, initializeApi, importLibrary } = useGoogleMaps();
 
 // 地図表示用のref
 const mapContainer = ref<HTMLDivElement | null>(null);
@@ -24,10 +27,6 @@ let marker: google.maps.marker.AdvancedMarkerElement | null = null;
 
 // GeoJSONデータのキャッシュ
 let geojsonData: any = null;
-
-// Google Maps API キー
-const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID;
 
 /**
  * 地図の初期化
@@ -45,11 +44,8 @@ async function initMap() {
   }
 
   try {
-    // Google Maps API の設定
-    setOptions({
-      key: apiKey,
-      v: 'weekly',
-    });
+    // Google Maps API の初期化（初回のみ実行）
+    initializeApi();
 
     // Maps ライブラリの読み込み
     const { Map } = await importLibrary('maps');
