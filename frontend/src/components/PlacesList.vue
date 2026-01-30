@@ -91,7 +91,7 @@ watch(() => props.placeName, () => {
             <img
               :src="getPhotoUrl(place.photos[0].name, 400)"
               :alt="place.displayName.text"
-              @error="(e) => (e.target as HTMLImageElement).src = '/placeholder-image.png'"
+              @error="(e) => { if (e.target) (e.target as HTMLImageElement).src = '/placeholder-image.png'; }"
             />
           </div>
           <div v-else class="place-photo-placeholder">
@@ -152,7 +152,7 @@ watch(() => props.placeName, () => {
 
 .places-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 

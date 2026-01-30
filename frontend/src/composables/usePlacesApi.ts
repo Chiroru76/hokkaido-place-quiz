@@ -151,7 +151,7 @@ async function fetchNearbyPlaces(
           },
         },
         includedTypes: ['tourist_attraction'],
-        maxResultCount: 4,
+        maxResultCount: 3,
       }),
     });
 
