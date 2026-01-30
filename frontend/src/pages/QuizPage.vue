@@ -189,12 +189,16 @@ function shareToX() {
 }
 
 useKeyboard({
-  Enter: () => {
+  Enter: (event) => {
     if (state.value.phase === "question") {
-      onAnswer();
+      // Cmd+Enter (Mac) または Ctrl+Enter (Windows) で回答送信
+      if (event.metaKey || event.ctrlKey) {
+        onAnswer();
+      }
       return;
     }
     if (state.value.phase === "answered") {
+      // answered phase では通常の Enter で次へ進む
       onNext();
     }
   },
@@ -243,15 +247,20 @@ useKeyboard({
           <h2>{{ state.placeName }}</h2>
         </n-card>
 
-        <n-space justify="center">
-          <n-input
-            v-model:value="answerInput"
-            placeholder="ひらがなで入力"
-            style="width: 300px;"
-          />
-          <n-button type="primary" size="large" @click="onAnswer">
-            回答する
-          </n-button>
+        <n-space vertical align="center" :size="8">
+          <n-space justify="center">
+            <n-input
+              v-model:value="answerInput"
+              placeholder="ひらがなで入力"
+              style="width: 300px;"
+            />
+            <n-button type="primary" size="large" @click="onAnswer">
+              回答する
+            </n-button>
+          </n-space>
+          <p style="font-size: 12px; color: #999; margin: 0;">
+            Cmd/Ctrl+Enter で回答
+          </p>
         </n-space>
       </n-space>
     </div>
