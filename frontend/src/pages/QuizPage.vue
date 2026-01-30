@@ -15,6 +15,7 @@ import { useTimer } from "../composables/useTimer";
 import HokkaidoMap from "../components/HokkaidoMap.vue";
 import AnsweredMap from "../components/AnsweredMap.vue";
 import PlacesList from "../components/PlacesList.vue";
+import RouteInfo from "../components/RouteInfo.vue";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
@@ -202,8 +203,6 @@ useKeyboard({
 
 <template>
   <div>
-    <h1 class="page-title">北海道地名読みクイズ</h1>
-
     <!-- idle -->
     <div v-if="state.phase === 'idle'">
         <n-space vertical size="large">
@@ -281,6 +280,10 @@ useKeyboard({
 
         <n-card title="場所を確認" size="small">
           <AnsweredMap :place-name="state.placeName" />
+        </n-card>
+
+        <n-card title="東京駅から車で行く場合🚗" size="small">
+          <RouteInfo :place-name="state.placeName" />
         </n-card>
 
         <n-card title="周辺の観光スポット 🏞️" size="small">
