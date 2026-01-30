@@ -160,13 +160,48 @@ async function fetchNearbyPlaces(
 }
 
 /**
+ * SessionStorageからキャッシュを取得
+ */
+function getCachedPlaces(municipalityName: string): PlaceResult[] | null {
+  try {
+    const cacheKey = `places_cache_${municipalityName}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (error) {
+    console.error('Failed to get cached places:', error);
+  }
+  return null;
+}
+
+/**
+ * SessionStorageにキャッシュを保存
+ */
+function setCachedPlaces(municipalityName: string, places: PlaceResult[]): void {
+  try {
+    const cacheKey = `places_cache_${municipalityName}`;
+    sessionStorage.setItem(cacheKey, JSON.stringify(places));
+  } catch (error) {
+    console.error('Failed to set cached places:', error);
+  }
+}
+
+/**
  * Places API を使用するcomposable
  */
 export function usePlacesApi() {
   /**
-   * 市町村名から観光スポットを検索
+   * 市町村名から観光スポットを検索（キャッシュ対応）
    */
   async function searchPlacesByMunicipality(municipalityName: string): Promise<PlaceResult[]> {
+    // キャッシュをチェック
+    const cached = getCachedPlaces(municipalityName);
+    if (cached) {
+      console.log(`Using cached places for: ${municipalityName}`);
+      return cached;
+    }
+
     // 市町村の中心座標を取得
     const center = await getMunicipalityCenterFromGeoJson(municipalityName);
     if (!center) {
@@ -176,6 +211,12 @@ export function usePlacesApi() {
 
     // Places API で観光スポットを検索
     const places = await fetchNearbyPlaces(center.lat, center.lng);
+
+    // キャッシュに保存
+    if (places.length > 0) {
+      setCachedPlaces(municipalityName, places);
+    }
+
     return places;
   }
 
