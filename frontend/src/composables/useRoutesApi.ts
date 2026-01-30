@@ -27,6 +27,7 @@ async function fetchRoute(
     return null;
   }
 
+  // TRANSITモードではroutingPreferenceがサポートされていないため除外
   const requestBody: ComputeRoutesRequest = {
     origin: {
       location: {
@@ -39,7 +40,7 @@ async function fetchRoute(
       },
     },
     travelMode,
-    routingPreference: 'TRAFFIC_AWARE',
+    ...(travelMode === 'DRIVE' && { routingPreference: 'TRAFFIC_AWARE' }),
     computeAlternativeRoutes: false,
     languageCode: 'ja',
     units: 'METRIC',
@@ -158,7 +159,7 @@ function getDestinationKey(destination: LatLng): string {
 export function useRoutesApi() {
   /**
    * 東京駅から目的地までのルート情報を取得（キャッシュ対応）
-   * DRIVEとTRANSITの両方を並列で取得
+   * DRIVEモード（車）のみ取得
    */
   async function fetchRoutesFromTokyo(destination: LatLng): Promise<RouteInfo[]> {
     const destinationKey = getDestinationKey(destination);
@@ -169,15 +170,11 @@ export function useRoutesApi() {
       console.log(`Using cached routes for: ${destinationKey}`);
       const routes: RouteInfo[] = [];
       if (cached.drive) routes.push(cached.drive);
-      if (cached.transit) routes.push(cached.transit);
       return routes;
     }
 
-    // DRIVEとTRANSITを並列で取得
-    const [driveRoute, transitRoute] = await Promise.all([
-      fetchRoute(TOKYO_STATION, destination, 'DRIVE'),
-      fetchRoute(TOKYO_STATION, destination, 'TRANSIT'),
-    ]);
+    // DRIVEモード（車）のみ取得
+    const driveRoute = await fetchRoute(TOKYO_STATION, destination, 'DRIVE');
 
     // キャッシュに保存
     const cacheData: CachedRouteData = {
@@ -185,14 +182,13 @@ export function useRoutesApi() {
       origin: TOKYO_STATION,
       destination,
       drive: driveRoute,
-      transit: transitRoute,
+      transit: null,
     };
     setCachedRoutes(destinationKey, cacheData);
 
     // 結果を配列にまとめる
     const routes: RouteInfo[] = [];
     if (driveRoute) routes.push(driveRoute);
-    if (transitRoute) routes.push(transitRoute);
 
     return routes;
   }

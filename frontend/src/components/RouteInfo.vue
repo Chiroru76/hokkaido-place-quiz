@@ -161,10 +161,6 @@ watch(() => props.placeName, () => {
 
 <template>
   <div class="route-info">
-    <!-- ヘッダー -->
-    <div class="route-header">
-      <h3 class="route-title">東京駅からのアクセス</h3>
-    </div>
 
     <!-- ローディング表示 -->
     <div v-if="isLoading" class="loading-container">
@@ -188,11 +184,6 @@ watch(() => props.placeName, () => {
           class="route-card"
         >
           <div class="route-content">
-            <!-- アイコンとモード名 -->
-            <div class="route-mode">
-              <span class="route-icon">{{ route.travelMode === 'DRIVE' ? '🚗' : '🚄' }}</span>
-              <span class="route-mode-name">{{ route.travelMode === 'DRIVE' ? '車' : '公共交通機関' }}</span>
-            </div>
 
             <!-- 所要時間 -->
             <div class="route-detail">
@@ -268,7 +259,7 @@ watch(() => props.placeName, () => {
 
 .routes-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 12px;
 }
 
@@ -327,12 +318,5 @@ watch(() => props.placeName, () => {
   display: flex;
   justify-content: center;
   padding-top: 8px;
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-  .routes-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

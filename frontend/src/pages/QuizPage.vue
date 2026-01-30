@@ -203,8 +203,6 @@ useKeyboard({
 
 <template>
   <div>
-    <h1 class="page-title">北海道地名読みクイズ</h1>
-
     <!-- idle -->
     <div v-if="state.phase === 'idle'">
         <n-space vertical size="large">
@@ -284,12 +282,12 @@ useKeyboard({
           <AnsweredMap :place-name="state.placeName" />
         </n-card>
 
-        <n-card title="周辺の観光スポット 🏞️" size="small">
-          <PlacesList :place-name="state.placeName" />
+        <n-card title="東京駅から車で行く場合🚗" size="small">
+          <RouteInfo :place-name="state.placeName" />
         </n-card>
 
-        <n-card title="東京駅からのアクセス 🚗🚄" size="small">
-          <RouteInfo :place-name="state.placeName" />
+        <n-card title="周辺の観光スポット 🏞️" size="small">
+          <PlacesList :place-name="state.placeName" />
         </n-card>
 
         <n-button type="primary" size="large" block @click="onNext">
