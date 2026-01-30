@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import type { RouteInfo, LatLng } from '../types/routes';
-import { TOKYO_STATION } from '../types/routes';
+import { useRoutesApi } from '../composables/useRoutesApi';
 
 /**
  * Props定義
@@ -14,6 +14,10 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+// Routes API composable
+const { fetchRoutesFromTokyo } = useRoutesApi();
+// const { getGoogleMapsRouteUrl } = useRoutesApi(); // Phase 6で使用予定
 
 /**
  * 状態管理
@@ -36,14 +40,13 @@ async function loadRoutes() {
   errorMessage.value = '';
 
   try {
-    // TODO: Routes APIを呼び出してルート情報を取得
-    // Phase 4で実装予定
-    console.log('Loading routes from', TOKYO_STATION, 'to', props.destinationLocation);
+    const results = await fetchRoutesFromTokyo(props.destinationLocation);
+    routes.value = results;
 
-    // 仮データ（Phase 4で削除）
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    routes.value = [];
-
+    if (results.length === 0) {
+      hasError.value = true;
+      errorMessage.value = 'ルート情報が見つかりませんでした';
+    }
   } catch (error) {
     console.error('Failed to load routes:', error);
     hasError.value = true;
