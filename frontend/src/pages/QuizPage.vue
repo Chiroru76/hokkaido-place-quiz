@@ -14,6 +14,7 @@ import { useMunicipalityTrivia } from "../composables/useMunicipalityTrivia";
 import { useTimer } from "../composables/useTimer";
 import HokkaidoMap from "../components/HokkaidoMap.vue";
 import AnsweredMap from "../components/AnsweredMap.vue";
+import PlacesList from "../components/PlacesList.vue";
 
 const state = ref<QuizState>({ ...initialQuizState });
 const answerInput = ref("");
@@ -280,6 +281,10 @@ useKeyboard({
 
         <n-card title="場所を確認" size="small">
           <AnsweredMap :place-name="state.placeName" />
+        </n-card>
+
+        <n-card title="周辺の観光スポット 🏞️" size="small">
+          <PlacesList :place-name="state.placeName" />
         </n-card>
 
         <n-button type="primary" size="large" block @click="onNext">
