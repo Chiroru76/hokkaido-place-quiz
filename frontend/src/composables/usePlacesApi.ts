@@ -2,6 +2,11 @@
  * Google Places API (New) を使用して観光スポットを検索するcomposable
  */
 
+import { useGoogleMaps } from './useGoogleMaps';
+
+// Google Maps API の初期化（composableのトップレベルで実行）
+const { initializeApi, importLibrary } = useGoogleMaps();
+
 /**
  * Places API のレスポンス型定義
  */
@@ -79,6 +84,10 @@ async function getMunicipalityCenterFromGeoJson(
     return null;
   }
 
+  // Google Maps APIを初期化してCoreライブラリをロード
+  initializeApi();
+  await importLibrary('core');
+
   // Google Maps LatLngBounds を使用して境界を計算
   const bounds = new google.maps.LatLngBounds();
 
@@ -141,13 +150,18 @@ async function fetchNearbyPlaces(
             radius: radius,
           },
         },
-        includedTypes: ['tourist_attraction', 'point_of_interest'],
+        includedTypes: ['tourist_attraction'],
         maxResultCount: 5,
       }),
     });
 
     if (!response.ok) {
-      console.error('Places API request failed:', response.statusText);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Places API request failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+      });
       return [];
     }
 
