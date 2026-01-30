@@ -16,8 +16,7 @@ interface Props {
 const props = defineProps<Props>();
 
 // Routes API composable
-const { fetchRoutesFromTokyo } = useRoutesApi();
-// const { getGoogleMapsRouteUrl } = useRoutesApi(); // Phase 6で使用予定
+const { fetchRoutesFromTokyo, getGoogleMapsRouteUrl } = useRoutesApi();
 
 /**
  * 状態管理
@@ -91,8 +90,49 @@ watch(() => [props.destination, props.destinationLocation], () => {
 
     <!-- ルート情報表示 -->
     <div v-else class="routes-container">
-      <!-- TODO: Phase 6でルート情報カードを実装 -->
-      <p class="placeholder-text">ルート情報を表示予定</p>
+      <!-- ルート情報カード -->
+      <div class="routes-grid">
+        <n-card
+          v-for="route in routes"
+          :key="route.travelMode"
+          size="small"
+          class="route-card"
+        >
+          <div class="route-content">
+            <!-- アイコンとモード名 -->
+            <div class="route-mode">
+              <span class="route-icon">{{ route.travelMode === 'DRIVE' ? '🚗' : '🚄' }}</span>
+              <span class="route-mode-name">{{ route.travelMode === 'DRIVE' ? '車' : '公共交通機関' }}</span>
+            </div>
+
+            <!-- 所要時間 -->
+            <div class="route-detail">
+              <span class="detail-label">所要時間</span>
+              <span class="detail-value">{{ route.formattedDuration }}</span>
+            </div>
+
+            <!-- 距離 -->
+            <div class="route-detail">
+              <span class="detail-label">距離</span>
+              <span class="detail-value">{{ route.formattedDistance }}</span>
+            </div>
+          </div>
+        </n-card>
+      </div>
+
+      <!-- Google Mapsで詳細を見るボタン -->
+      <div class="maps-button-container">
+        <n-button
+          type="primary"
+          size="medium"
+          tag="a"
+          :href="getGoogleMapsRouteUrl(destinationLocation)"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Google Mapsで詳細を見る
+        </n-button>
+      </div>
     </div>
   </div>
 </template>
@@ -134,13 +174,76 @@ watch(() => [props.destination, props.destinationLocation], () => {
 .routes-container {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.routes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
-.placeholder-text {
-  color: #999;
-  text-align: center;
-  padding: 24px;
-  margin: 0;
+.route-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.route-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.route-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.route-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.route-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.route-mode-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.route-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.detail-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.maps-button-container {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .routes-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
