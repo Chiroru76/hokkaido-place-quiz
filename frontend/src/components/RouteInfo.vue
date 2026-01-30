@@ -2,18 +2,20 @@
 import { ref, onMounted, watch } from 'vue';
 import type { RouteInfo, LatLng } from '../types/routes';
 import { useRoutesApi } from '../composables/useRoutesApi';
+import { useGoogleMaps } from '../composables/useGoogleMaps';
 
 /**
  * Props定義
  */
 interface Props {
   /** 目的地の市町村名 */
-  destination: string;
-  /** 目的地の緯度経度 */
-  destinationLocation: LatLng;
+  placeName: string;
 }
 
 const props = defineProps<Props>();
+
+// Google Maps API 初期化
+const { initializeApi, importLibrary } = useGoogleMaps();
 
 // Routes API composable
 const { fetchRoutesFromTokyo, getGoogleMapsRouteUrl } = useRoutesApi();
@@ -22,15 +24,90 @@ const { fetchRoutesFromTokyo, getGoogleMapsRouteUrl } = useRoutesApi();
  * 状態管理
  */
 const routes = ref<RouteInfo[]>([]);
+const destinationLocation = ref<LatLng | null>(null);
 const isLoading = ref(true);
 const hasError = ref(false);
 const errorMessage = ref('');
+
+// GeoJSONデータのキャッシュ
+let geojsonCache: any = null;
+
+/**
+ * GeoJSONデータを読み込む
+ */
+async function loadGeoJson() {
+  if (geojsonCache) {
+    return geojsonCache;
+  }
+
+  try {
+    const response = await fetch('/data/hokkaido.geojson');
+    geojsonCache = await response.json();
+    return geojsonCache;
+  } catch (error) {
+    console.error('Failed to load GeoJSON data:', error);
+    return null;
+  }
+}
+
+/**
+ * 市町村名から中心座標を取得
+ */
+async function getMunicipalityCenterFromGeoJson(
+  municipalityName: string
+): Promise<LatLng | null> {
+  const data = await loadGeoJson();
+  if (!data || !data.features) {
+    return null;
+  }
+
+  // 市町村でフィルタリング
+  const features = data.features.filter((feature: any) =>
+    feature.properties?.市町村名 === municipalityName
+  );
+
+  if (features.length === 0) {
+    return null;
+  }
+
+  // Google Maps APIを初期化してCoreライブラリをロード
+  initializeApi();
+  await importLibrary('core');
+
+  // Google Maps LatLngBounds を使用して境界を計算
+  const bounds = new google.maps.LatLngBounds();
+
+  features.forEach((feature: any) => {
+    const geometry = feature.geometry;
+    // Polygon と MultiPolygon の処理を統一
+    const rings = geometry?.type === 'Polygon'
+      ? [geometry.coordinates[0]]
+      : geometry?.type === 'MultiPolygon'
+      ? geometry.coordinates.map((polygon: number[][][]) => polygon[0])
+      : [];
+
+    rings.forEach((ring: number[][]) => {
+      ring?.forEach((coord: number[]) => {
+        if (coord.length >= 2 && typeof coord[0] === 'number' && typeof coord[1] === 'number') {
+          bounds.extend(new google.maps.LatLng(coord[1], coord[0]));
+        }
+      });
+    });
+  });
+
+  // 中心座標を取得
+  const center = bounds.getCenter();
+  return {
+    latitude: center.lat(),
+    longitude: center.lng(),
+  };
+}
 
 /**
  * ルート情報を取得
  */
 async function loadRoutes() {
-  if (!props.destination || !props.destinationLocation) {
+  if (!props.placeName) {
     return;
   }
 
@@ -39,7 +116,19 @@ async function loadRoutes() {
   errorMessage.value = '';
 
   try {
-    const results = await fetchRoutesFromTokyo(props.destinationLocation);
+    // 市町村の中心座標を取得
+    const location = await getMunicipalityCenterFromGeoJson(props.placeName);
+    if (!location) {
+      hasError.value = true;
+      errorMessage.value = '市町村の位置情報が見つかりませんでした';
+      isLoading.value = false;
+      return;
+    }
+
+    destinationLocation.value = location;
+
+    // Routes APIでルート情報を取得
+    const results = await fetchRoutesFromTokyo(location);
     routes.value = results;
 
     if (results.length === 0) {
@@ -65,7 +154,7 @@ onMounted(() => {
 /**
  * 目的地が変更されたら再取得
  */
-watch(() => [props.destination, props.destinationLocation], () => {
+watch(() => props.placeName, () => {
   loadRoutes();
 });
 </script>
@@ -89,7 +178,7 @@ watch(() => [props.destination, props.destinationLocation], () => {
     </div>
 
     <!-- ルート情報表示 -->
-    <div v-else class="routes-container">
+    <div v-else-if="destinationLocation" class="routes-container">
       <!-- ルート情報カード -->
       <div class="routes-grid">
         <n-card
