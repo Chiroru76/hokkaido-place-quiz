@@ -18,4 +18,13 @@ const router = createRouter({
   ],
 });
 
+router.afterEach((to) => {
+  const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
+  if (!gtag) return;
+
+  gtag("event", "page_view", {
+    page_path: to.fullPath,
+  });
+});
+
 export default router;
