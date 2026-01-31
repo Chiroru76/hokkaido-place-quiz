@@ -3,7 +3,7 @@ require "securerandom"
 module Api
   module V1
     class SessionsController < ApplicationController
-      DEFAULT_QUESTION_COUNT = 10
+      DEFAULT_QUESTION_COUNT = 5
 
       def create
         total = params.fetch(:total, DEFAULT_QUESTION_COUNT).to_i

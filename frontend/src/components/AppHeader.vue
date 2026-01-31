@@ -7,7 +7,7 @@ const route = useRoute();
 <template>
   <header class="app-header">
     <div class="header-container">
-      <h1 class="app-title">北海道地名読みクイズ</h1>
+      <h1 class="app-title">よめるべ？北海道</h1>
       <nav class="nav-links">
         <router-link to="/" custom v-slot="{ navigate, isActive }">
           <n-button
