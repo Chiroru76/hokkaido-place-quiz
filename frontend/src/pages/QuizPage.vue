@@ -87,7 +87,7 @@ async function onStart() {
   reset();
   start();
   // セッション開始
-  const session: SessionResponse = await startSession(10);
+  const session: SessionResponse = await startSession(5);
 
   // 最初の問題取得
   const next: NextQuestionResponse = await fetchNextQuestion(
@@ -176,13 +176,14 @@ function onRetry() {
  * Xでシェア
  */
 function shareToX() {
-  const text = `北海道地名読みクイズ
+  const text = `よめるべ？北海道
+
 今回: ${state.value.correctCount} / ${state.value.total} 問正解！
 累計: ${achievedCount.value} / 179 市町村クリア
 
-#北海道地名読みクイズ`;
+#よめるべ？北海道 #北海道地名クイズ `;
 
-  const url = import.meta.env.VITE_APP_URL || 'https://hokkaido-place-quiz.example.com';
+  const url = import.meta.env.VITE_APP_URL || 'https://hokkaido-place-quiz.vercel.app';
   const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
 
   window.open(shareUrl, '_blank', 'width=550,height=420');
@@ -214,7 +215,7 @@ useKeyboard({
 
           <n-card title="ルール" size="small">
             <n-space vertical>
-              <p> 全10問出題されます</p>
+              <p> 全5問出題されます</p>
               <p> 地名の読みを「ひらがな」で入力してください</p>
               <p> 179市町村全て読めるようになりましょう</p>
             </n-space>
