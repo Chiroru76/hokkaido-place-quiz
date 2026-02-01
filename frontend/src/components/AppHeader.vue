@@ -1,33 +1,26 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-
-const route = useRoute();
 </script>
 
 <template>
   <header class="app-header">
     <div class="header-container">
-      <h1 class="app-title">よめるべ？北海道</h1>
-      <nav class="nav-links">
-        <router-link to="/" custom v-slot="{ navigate, isActive }">
-          <n-button
-            @click="navigate"
-            :type="isActive ? 'primary' : 'default'"
-            size="medium"
-          >
-            クイズ
-          </n-button>
-        </router-link>
-        <router-link to="/achievement" custom v-slot="{ navigate, isActive }">
-          <n-button
-            @click="navigate"
-            :type="isActive ? 'primary' : 'default'"
-            size="medium"
-          >
-            達成状況
-          </n-button>
-        </router-link>
-      </nav>
+      <router-link to="/" class="header-brand">
+        <img src="/icon.png" alt="よめるべ？北海道" class="brand-icon" />
+        <img src="/header_title.png" alt="よめるべ？北海道" class="brand-title" />
+      </router-link>
+
+      <router-link to="/achievement" custom v-slot="{ navigate }">
+        <n-button
+          @click="navigate"
+          
+          size="medium"
+          square
+          class="achievement-button"
+        >
+          <img src="/hokkaido.png" alt="" class="achievement-icon" />
+          市町村マップ
+        </n-button>
+      </router-link>
     </div>
   </header>
 </template>
@@ -36,28 +29,46 @@ const route = useRoute();
 .app-header {
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
-  padding: 16px 0;
+  padding: 10px 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .header-container {
   max-width: 720px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.app-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #000000;
-  margin: 0;
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
 }
 
-.nav-links {
-  display: flex;
-  gap: 12px;
+.brand-icon {
+  width: 50px;
+  height: 40px;
+}
+
+.brand-title {
+  height: 40px;
+  width: auto;
+}
+
+.achievement-button {
+  background: #f5f7f4;
+  color: rgb(52, 51, 51);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.achievement-icon {
+  width: 30px;
+  height: 30px;
 }
 </style>

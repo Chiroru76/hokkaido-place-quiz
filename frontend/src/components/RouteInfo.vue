@@ -204,13 +204,20 @@ watch(() => props.placeName, () => {
       <div class="maps-button-container">
         <n-button
           type="primary"
+          class="route-button"
           size="medium"
           tag="a"
           :href="getGoogleMapsRouteUrl(destinationLocation)"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Google Mapsで詳細を見る
+          <img
+            src="/googlemap_icon.png"
+            alt=""
+            class="route-button-icon"
+            aria-hidden="true"
+          />
+          <span class="route-button-label">詳細を確認</span>
         </n-button>
       </div>
     </div>
@@ -254,7 +261,7 @@ watch(() => props.placeName, () => {
 .routes-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 6px;
 }
 
 .routes-grid {
@@ -303,6 +310,27 @@ watch(() => props.placeName, () => {
   align-items: center;
 }
 
+.route-button {
+  background: #ffffff;
+  border-radius: 999px;
+  border: none;
+  color: #000000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.route-button-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.route-button-label {
+  font-weight: 600;
+}
+
 .detail-label {
   font-size: 14px;
   color: #666;
@@ -311,12 +339,11 @@ watch(() => props.placeName, () => {
 .detail-value {
   font-size: 16px;
   font-weight: 600;
-  color: #1890ff;
+  color: #f04d34;
 }
 
 .maps-button-container {
   display: flex;
   justify-content: center;
-  padding-top: 8px;
 }
 </style>
