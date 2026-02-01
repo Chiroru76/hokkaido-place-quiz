@@ -115,9 +115,13 @@ const { achievedCount, achievementRate } = useAchievedMunicipalities();
 }
 
 .return-button {
-  padding: 0 40px;
-  height: 50px;
-  font-size: 1.1rem;
-  background-color: #67c23a;
+  width: 100%;
+  max-width: 400px;
+  height: 40px;
+  border-radius: 32px;
+  font-size: 15px;
+  font-weight: 500;
+  background: linear-gradient(180deg, #67C23A 0%, #6db12a 100%);
+  transition: all 0.3s ease;
 }
 </style>

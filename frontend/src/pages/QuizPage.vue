@@ -236,24 +236,26 @@ useKeyboard({
 
         <n-card class="rules-card" size="large">
           <n-space vertical size="medium" align="center">
+            <n-text class="rules-text">北海道にある179市町村の名前<br>あなたはいくつ読めますか？</n-text>
+
             <n-text strong class="rules-title">あそびかた</n-text>
             <n-grid :cols="3" :x-gap="12" :y-gap="12" responsive="screen">
               <n-gi>
                 <div class="rule-item">
                   <div class="rule-badge">1</div>
-                  <p>全5問出題されます</p>
+                  <p>問題は5問出題されます</p>
                 </div>
               </n-gi>
               <n-gi>
                 <div class="rule-item">
                   <div class="rule-badge">2</div>
-                  <p>読みを「ひらがな」で入力</p>
+                  <p>市町村名の読みを<br>「ひらがな」で入力</p>
                 </div>
               </n-gi>
               <n-gi>
                 <div class="rule-item">
                   <div class="rule-badge">3</div>
-                  <p>179市町村を制覇しよう</p>
+                  <p>全179市町村の<br>コンプリートを目指そう</p>
                 </div>
               </n-gi>
             </n-grid>
@@ -474,6 +476,12 @@ p {
 }
 
 .rules-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #4b6b2a;
+}
+
+.rules-text {
   font-size: 16px;
   color: #4b6b2a;
 }
