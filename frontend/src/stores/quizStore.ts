@@ -289,15 +289,20 @@ export const useQuizStore = defineStore('quiz', () => {
    * Xでシェア
    */
   function shareToX() {
-    const text = `よめるべ？北海道
+    const url =
+      import.meta.env.VITE_APP_URL || 'https://hokkaido-place-quiz.vercel.app'
+    const text = `📍「 よめるべ？北海道 」
 
-今回: ${state.value.correctCount} / ${state.value.total} 問正解！
-累計: ${achievedCount.value} / 179 市町村クリア
+🗾 今回：${state.value.correctCount} / ${state.value.total} 問正解！
+🏆 累計：${achievedCount.value} / 179 市町村クリア
 
-#よめるべ？北海道 #北海道地名クイズ `
+北海道の地名、意外と読めないべ？
 
-    const url = import.meta.env.VITE_APP_URL || 'https://hokkaido-place-quiz.vercel.app'
-    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
+👇 あなたは何問いける？
+${url}
+
+#よめるべ北海道 #北海道地名クイズ`
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
 
     window.open(shareUrl, '_blank', 'width=550,height=420')
   }
