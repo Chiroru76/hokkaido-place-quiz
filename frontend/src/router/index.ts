@@ -21,7 +21,7 @@ const router = createRouter({
       /**
        * ルートガード: questionフェーズでない場合はトップページへリダイレクト
        */
-      beforeEnter: (to, from, next) => {
+      beforeEnter: (_to, _from, next) => {
         const quizStore = useQuizStore();
         if (quizStore.state.phase !== 'question') {
           next('/');
@@ -37,7 +37,7 @@ const router = createRouter({
       /**
        * ルートガード: answeredフェーズでない場合はトップページへリダイレクト
        */
-      beforeEnter: (to, from, next) => {
+      beforeEnter: (_to, _from, next) => {
         const quizStore = useQuizStore();
         if (quizStore.state.phase !== 'answered') {
           next('/');
@@ -53,7 +53,7 @@ const router = createRouter({
       /**
        * ルートガード: completedフェーズでない場合はトップページへリダイレクト
        */
-      beforeEnter: (to, from, next) => {
+      beforeEnter: (_to, _from, next) => {
         const quizStore = useQuizStore();
         if (quizStore.state.phase !== 'completed') {
           next('/');

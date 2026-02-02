@@ -1,7 +1,7 @@
 import type { QuizState, QuestionState, AnsweredState } from "../types/quiz";
 
 export function startQuestion(
-  state: QuizState,
+  _state: QuizState,
   payload: {
     sessionId: string;
     total: number;
