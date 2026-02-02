@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useQuizStore } from '../stores/quizStore'
 import { useRouter } from 'vue-router'
 
@@ -7,6 +8,7 @@ import { useRouter } from 'vue-router'
  */
 const quizStore = useQuizStore()
 const router = useRouter()
+const isLoading = ref(false)
 
 /**
  * スタートボタンクリック時の処理
@@ -14,13 +16,30 @@ const router = useRouter()
  * 2. /quiz/questionへ遷移
  */
 async function onStart() {
-  await quizStore.startSession()
-  router.push('/quiz/question')
+  isLoading.value = true
+  try {
+    await quizStore.startSession()
+    router.push('/quiz/question')
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
 <template>
-  <div class="idle-screen">
+  <!-- ローディング画面 -->
+  <div v-if="isLoading" class="loading-overlay">
+    <img
+      src="/hokkaido.png"
+      alt="北海道"
+      class="hokkaido-spinner"
+    />
+    <p class="loading-text">ローディング中</p>
+    <p class="loading-sub">もう少し待っててな〜</p>
+  </div>
+
+  <!-- 通常のスタート画面 -->
+  <div v-else class="idle-screen">
     <n-space vertical size="large" align="center">
       <n-space vertical size="large" align="center">
         <img
@@ -62,6 +81,7 @@ async function onStart() {
         type="primary"
         size="large"
         class="answer-button"
+        :disabled="isLoading"
         @click="onStart"
       >
         スタート
@@ -128,5 +148,44 @@ async function onStart() {
 .answer-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(63, 239, 69, 0.3);
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.hokkaido-spinner {
+  width: 160px;
+  height: auto;
+  animation: spin 2.5s linear infinite;
+  margin-bottom: 24px;
+}
+
+.loading-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.loading-sub {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
