@@ -79,6 +79,9 @@ async function fetchRoute(
     }
 
     const route = data.routes[0];
+    if (!route) {
+      return null;
+    }
 
     // 秒数に変換（"12345s" → 12345）
     const durationSeconds = parseInt(route.duration.replace('s', ''));

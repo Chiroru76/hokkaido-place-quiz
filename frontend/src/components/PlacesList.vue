@@ -89,7 +89,7 @@ watch(() => props.placeName, () => {
           <!-- 写真 -->
           <div v-if="place.photos && place.photos.length > 0" class="place-photo">
             <img
-              :src="getPhotoUrl(place.photos[0].name, 400)"
+              :src="getPhotoUrl(place.photos[0]?.name || '', 400)"
               :alt="place.displayName.text"
               @error="(e) => { if (e.target) (e.target as HTMLImageElement).src = '/placeholder-image.png'; }"
             />
