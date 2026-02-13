@@ -9,18 +9,24 @@
         <img src="/header_title.png" alt="よめるべ？北海道" class="brand-title" />
       </router-link>
 
-      <router-link to="/achievement" custom v-slot="{ navigate }">
-        <n-button
-          @click="navigate"
-          
-          size="medium"
-          square
-          class="achievement-button"
-        >
-          <img src="/hokkaido.png" alt="" class="achievement-icon" />
-          市町村マップ
-        </n-button>
-      </router-link>
+      <div class="header-actions">
+        <router-link to="/favorites" custom v-slot="{ navigate }">
+          <n-button @click="navigate" size="medium" square class="achievement-button">
+            ❤️ 行ってみたい
+          </n-button>
+        </router-link>
+
+        <router-link to="/achievement" custom v-slot="{ navigate }">
+          <n-button
+            @click="navigate"
+            size="medium"
+            square class="achievement-button">
+            <img src="/hokkaido.png" alt="" class="achievement-icon" />
+            市町村マップ
+          </n-button>
+        </router-link>
+      </div>
+
     </div>
   </header>
 </template>
@@ -70,5 +76,11 @@
 .achievement-icon {
   width: 30px;
   height: 30px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

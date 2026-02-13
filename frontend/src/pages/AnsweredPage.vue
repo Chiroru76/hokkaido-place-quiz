@@ -15,6 +15,15 @@ const router = useRouter()
 const { getTrivia } = useMunicipalityTrivia()
 
 /**
+ * お気に入りボタンクリック時の処理
+ */
+function onToggleFavorite() {
+  if(quizStore.state.phase === 'answered') {
+    quizStore.toggleFavorite(quizStore.state.placeName)
+  }
+}
+
+/**
  * 次へボタンクリック時の処理
  * 1. quizStoreのnextQuestionを呼び出し
  * 2. 完了ならば/quiz/result、継続なら/quiz/questionへ遷移
@@ -55,6 +64,18 @@ useKeyboard({
             <span class="reading-label">よみ</span>
             <span class="reading-text">{{ quizStore.state.correctReading || '（正解入力）' }}</span>
           </div>
+          <!-- お気に入りボタン -->
+          <n-button
+            size="small"
+            class="favorite-button"
+            @click="onToggleFavorite">
+            <span class="favorite-icon">
+              {{ quizStore.isFavorite(quizStore.state.placeName) ? '❤️' : '🤍' }}
+            </span>
+            <span class="favorite-text">
+              行ってみたい
+            </span>
+          </n-button>
         </div>
       </n-card>
 
@@ -237,6 +258,34 @@ useKeyboard({
   font-size: 13px;
   line-height: 1.7;
   color: #3d3d3d;
+}
+
+/* お気に入りボタン */
+.favorite-button {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  background-color: #f5f5f5;
+  transition: all 0.2s ease;
+}
+
+.favorite-button:hover {
+  background-color: #ffffff;
+  transform: scale(1.05);
+}
+
+.favorite-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.favorite-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
 
 .answered-places {

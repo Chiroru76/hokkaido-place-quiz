@@ -14,6 +14,7 @@ import {
 } from '../api/quizApi'
 import { useTimer } from '../composables/useTimer'
 import { useAchievedMunicipalities } from '../composables/useAchievedMunicipalities'
+import { useFavoriteMunicipalities } from '../composables/useFavoriteMunicipalities'
 
 /**
  * 出題した地名の情報
@@ -80,6 +81,9 @@ export const useQuizStore = defineStore('quiz', () => {
 
   // 正解済み市町村管理
   const achievements = useAchievedMunicipalities()
+
+  // お気に入り市町村管理
+  const favorites = useFavoriteMunicipalities()
 
   // ===================================
   // Getters (算出プロパティ)
@@ -335,5 +339,13 @@ ${url}
     markAsAchieved: achievements.markAsAchieved,
     isAchieved: achievements.isAchieved,
     achievedList: achievements.achievedList,
+
+    // Favorites (お気に入り市町村管理の公開)
+    // store が外部に公開する「名前（キー）」：実際に中身として使う「値（変数・関数）」
+    favorites: favorites.favorites,
+    addFavorite: favorites.addFavorite,
+    removeFavorite: favorites.removeFavorite,
+    toggleFavorite: favorites.toggleFavorite,
+    isFavorite: favorites.isFavorite,
   }
 })
