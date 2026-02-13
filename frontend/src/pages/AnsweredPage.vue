@@ -18,7 +18,7 @@ const { getTrivia } = useMunicipalityTrivia()
  * お気に入りボタンクリック時の処理
  */
 function onToggleFavorite() {
-  if(quizStore.state.placeName) {
+  if(quizStore.state.phase === 'answered') {
     quizStore.toggleFavorite(quizStore.state.placeName)
   }
 }
