@@ -2,12 +2,14 @@
 /// <reference types="@types/google.maps" />
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useGoogleMaps } from '../composables/useGoogleMaps';
+import type { PlaceResult } from '../composables/usePlacesApi';
 
 /**
  * Props定義
  */
 interface Props {
   placeName: string;
+  touristSpots?: PlaceResult[];
 }
 
 const props = defineProps<Props>();
@@ -23,7 +25,8 @@ const errorMessage = ref('');
 
 // Google Maps インスタンス
 let map: google.maps.Map | null = null;
-let marker: google.maps.marker.AdvancedMarkerElement | null = null;
+let touristMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
+let infoWindow: google.maps.InfoWindow | null = null;
 
 // GeoJSONデータのキャッシュ
 let geojsonData: any = null;
@@ -218,12 +221,6 @@ async function loadAndDisplayPolygon() {
     return;
   }
 
-  // 既存のマーカーをクリア
-  if (marker) {
-    marker.map = null;
-    marker = null;
-  }
-
   // GeoJSONデータを読み込み
   const data = await loadGeoJson();
   if (!data) {
@@ -285,15 +282,43 @@ async function loadAndDisplayPolygon() {
 
   // 北海道全体から該当市町村へスムーズにズームイン（2-3秒のアニメーション）
   await zoomToMunicipality(bounds);
+}
 
-  // アニメーション完了後、マーカーを配置
+/**
+ * 観光スポットマーカーをクリアする
+ */
+function clearTouristMarkers() {
+  touristMarkers.forEach(m => { m.map = null; });
+  touristMarkers = [];
+}
+
+/**
+ * 観光スポットマーカーを地図に配置する
+ */
+async function addTouristMarkers() {
+  if (!map || !props.touristSpots) return;
+
+  clearTouristMarkers();
+
   const { AdvancedMarkerElement } = await importLibrary('marker');
+  infoWindow = new google.maps.InfoWindow();
 
-  marker = new AdvancedMarkerElement({
-    position: center,
-    map: map,
-    title: props.placeName,
-  });
+  for (const spot of props.touristSpots) {
+    if (!spot.location) continue;
+
+    const spotMarker = new AdvancedMarkerElement({
+      position: { lat: spot.location.latitude, lng: spot.location.longitude },
+      map,
+      title: spot.displayName.text,
+    });
+
+    spotMarker.addListener('click', () => {
+      infoWindow!.setContent(`<strong>${spot.displayName.text}</strong>`);
+      infoWindow!.open(map, spotMarker);
+    });
+
+    touristMarkers.push(spotMarker);
+  }
 }
 
 /**
@@ -307,13 +332,7 @@ onMounted(() => {
  * コンポーネントのアンマウント時のクリーンアップ
  */
 onUnmounted(() => {
-  // マーカーの破棄
-  if (marker) {
-    marker.map = null;
-    marker = null;
-  }
-
-  // 地図インスタンスの破棄
+  clearTouristMarkers();
   map = null;
 });
 
@@ -323,8 +342,14 @@ onUnmounted(() => {
 watch(() => props.placeName, async () => {
   if (props.placeName) {
     await loadAndDisplayPolygon();
-    // TODO: Phase 4 でマーカー表示を実装
   }
+});
+
+/**
+ * touristSpotsが更新されたらマーカーを配置
+ */
+watch(() => props.touristSpots, async () => {
+  await addTouristMarkers();
 });
 </script>
 
