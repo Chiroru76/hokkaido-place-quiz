@@ -13,16 +13,16 @@ const favoriteList = computed(() => Array.from(favorites.value))
     <n-card class="favorites-card">
       <!-- ヘッダー：件数表示 -->
       <div class="favorites-header">
-        <h2 class="favorites-title">お気に入りの市町村</h2>
+        <h2 class="favorites-title">行ってみたい市町村</h2>
         <span class="favorites-count">合計 {{ favoriteList.length }} 件</span>
       </div>
 
       <!-- 空状態 -->
       <div v-if="favoriteList.length === 0" class="favorites-empty">
-        お気に入りに登録された市町村はありません。
+        行ってみたい市町村はありません。
       </div>
 
-      <!-- お気に入りリスト -->
+      <!-- リスト -->
       <div v-else class="favorites-list">
         <div v-for="name in favoriteList" :key="name" class="favorite-item">
           <span class="favorite-name">{{ name }}</span>

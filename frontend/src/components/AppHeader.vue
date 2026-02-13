@@ -12,7 +12,7 @@
       <div class="header-actions">
         <router-link to="/favorites" custom v-slot="{ navigate }">
           <n-button @click="navigate" size="medium" square class="achievement-button">
-            ❤️ お気に入り
+            ❤️ 行ってみたい
           </n-button>
         </router-link>
 

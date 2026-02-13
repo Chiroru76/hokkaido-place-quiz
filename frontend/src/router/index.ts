@@ -4,6 +4,7 @@ import QuestionPage from '../pages/QuestionPage.vue';
 import AnsweredPage from '../pages/AnsweredPage.vue';
 import ResultPage from '../pages/ResultPage.vue';
 import AchievementPage from '../pages/AchievementPage.vue';
+import FavoritesPage from '../pages/FavoritesPage.vue';
 import { useQuizStore } from '../stores/quizStore';
 
 const router = createRouter({
@@ -66,6 +67,11 @@ const router = createRouter({
       path: '/achievement',
       name: 'achievement',
       component: AchievementPage,
+    },
+    {
+      path: '/favorites',
+      name: 'favorites',
+      component: FavoritesPage,
     },
   ],
 });
