@@ -24,6 +24,10 @@ export interface PlaceResult {
     widthPx?: number;
     heightPx?: number;
   }>;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 /**
@@ -138,7 +142,7 @@ async function fetchNearbyPlaces(
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.photos',
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.photos,places.location',
       },
       body: JSON.stringify({
         locationRestriction: {

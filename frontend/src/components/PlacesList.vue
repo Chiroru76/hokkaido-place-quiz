@@ -10,6 +10,9 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const emit = defineEmits<{
+  'places-loaded': [places: PlaceResult[]];
+}>();
 
 // Places API composable
 const { searchPlacesByMunicipality, getPhotoUrl } = usePlacesApi();
@@ -35,6 +38,7 @@ async function loadPlaces() {
   try {
     const results = await searchPlacesByMunicipality(props.placeName);
     places.value = results;
+    emit('places-loaded', results);
 
     if (results.length === 0) {
       hasError.value = true;
