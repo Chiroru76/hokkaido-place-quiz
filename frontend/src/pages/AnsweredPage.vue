@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useQuizStore } from '../stores/quizStore'
 import { useRouter } from 'vue-router'
 import { useKeyboard } from '../composables/useKeyboard'
@@ -6,11 +7,13 @@ import { useMunicipalityTrivia } from '../composables/useMunicipalityTrivia'
 import AnsweredMap from '../components/AnsweredMap.vue'
 import PlacesList from '../components/PlacesList.vue'
 import RouteInfo from '../components/RouteInfo.vue'
+import type { PlaceResult } from '../composables/usePlacesApi'
 
 /**
  * quizStoreとrouterを取得
  */
 const quizStore = useQuizStore()
+const touristSpots = ref<PlaceResult[]>([])
 const router = useRouter()
 const { getTrivia } = useMunicipalityTrivia()
 
@@ -81,7 +84,7 @@ useKeyboard({
 
       <div class="answered-main">
         <n-card class="answered-map">
-          <AnsweredMap :place-name="quizStore.state.placeName" />
+          <AnsweredMap :place-name="quizStore.state.placeName" :tourist-spots="touristSpots" />
         </n-card>
 
         <n-space vertical size="medium" class="answered-side">
@@ -111,7 +114,7 @@ useKeyboard({
           <div class="answered-card-icon" aria-hidden="true">🖼️</div>
           <div class="card-title">周辺の観光スポット</div>
         </div>
-        <PlacesList :place-name="quizStore.state.placeName" />
+        <PlacesList :place-name="quizStore.state.placeName" @places-loaded="spots => touristSpots = spots" />
       </n-card>
 
       <n-button type="primary" size="large" class="answer-button" @click="onNext">
